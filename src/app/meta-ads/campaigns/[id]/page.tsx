@@ -91,38 +91,46 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <Card className="p-4">
               <h3 className="text-sm font-semibold mb-3">Associated Ad Sets ({data.adSets.length})</h3>
-              <div className="space-y-2 text-xs">
-                {data.adSets.map((as: any) => (
-                  <div key={as.id} className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900/70 flex justify-between">
-                    <div>
-                      <div className="font-semibold">{as.name}</div>
-                      <div className="text-[11px] text-slate-500">{as.placement} · {as.audienceInfo}</div>
+              {data.adSets.length === 0 ? (
+                <p className="text-xs text-slate-400 py-4 text-center">No ad sets linked to this campaign yet.</p>
+              ) : (
+                <div className="space-y-2 text-xs">
+                  {data.adSets.map((as: any) => (
+                    <div key={as.id} className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900/70 flex flex-wrap justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="font-semibold">{as.name}</div>
+                        <div className="text-[11px] text-slate-500">{as.placement} · {as.audienceInfo}</div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="font-semibold">{formatINR(as.spend)}</div>
+                        <div className="text-[11px] text-[#0B5CA8]">{as.leads} Leads</div>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <div className="font-semibold">{formatINR(as.spend)}</div>
-                      <div className="text-[11px] text-[#0B5CA8]">{as.leads} Leads</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </Card>
 
             <Card className="p-4">
               <h3 className="text-sm font-semibold mb-3">Associated Advertisements ({data.ads.length})</h3>
-              <div className="space-y-2 text-xs">
-                {data.ads.map((ad: any) => (
-                  <div key={ad.id} className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900/70 flex justify-between">
-                    <div>
-                      <div className="font-semibold">{ad.name}</div>
-                      <div className="text-[11px] text-slate-500">{ad.headline} ({ad.platform})</div>
+              {data.ads.length === 0 ? (
+                <p className="text-xs text-slate-400 py-4 text-center">No advertisements linked to this campaign yet.</p>
+              ) : (
+                <div className="space-y-2 text-xs">
+                  {data.ads.map((ad: any) => (
+                    <div key={ad.id} className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900/70 flex flex-wrap justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="font-semibold">{ad.name}</div>
+                        <div className="text-[11px] text-slate-500">{ad.headline} ({ad.platform})</div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="font-semibold">{formatINR(ad.spend)} · CTR {formatPercent(ad.ctr)}</div>
+                        <div className="text-[11px] text-[#0B5CA8]">{ad.leads} Leads (CPL {formatINR(ad.cpl)})</div>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <div className="font-semibold">{formatINR(ad.spend)} · CTR {formatPercent(ad.ctr)}</div>
-                      <div className="text-[11px] text-[#0B5CA8]">{ad.leads} Leads (CPL {formatINR(ad.cpl)})</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </Card>
           </div>
 
@@ -130,8 +138,29 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
             <div className="p-4 border-b border-slate-200 dark:border-slate-800">
               <h3 className="text-sm font-semibold">CRM Leads Attributed to Campaign ({data.crmLeads.length})</h3>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs text-left">
+            {data.crmLeads.length === 0 ? (
+              <p className="text-xs text-slate-400 p-6 text-center">No CRM leads attributed to this campaign yet.</p>
+            ) : (
+              <>
+                <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+                  {data.crmLeads.map((l: any) => (
+                    <div key={l.id} className="p-3.5 space-y-1.5 text-xs">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <Link href={`/leads/${l.id}`} className="font-semibold text-[#0B5CA8] hover:underline">{l.leadCode}</Link>
+                          <div className="font-medium">{l.customerName} ({l.mobile})</div>
+                        </div>
+                        <StatusBadge value={l.status} />
+                      </div>
+                      <div className="flex items-center justify-between text-[11px] text-slate-500">
+                        <span>{l.city} · {l.assignedEmployee}</span>
+                        <span>{formatDate(l.enquiryDate)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full text-xs text-left">
                 <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-500 border-b">
                   <tr>
                     <th className="p-3">Lead ID</th>
@@ -162,6 +191,8 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                 </tbody>
               </table>
             </div>
+              </>
+            )}
           </Card>
         </div>
       )}

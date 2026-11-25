@@ -5,7 +5,7 @@ import Link from "next/link";
 import { BarChart3, Plus, Target, Users } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { useAuth } from "@/components/AuthContext";
-import { Card, ErrorState, LoadingState, Modal, PageHeader, StatusBadge } from "@/components/ui";
+import { Card, EmptyState, ErrorState, LoadingState, Modal, PageHeader, StatusBadge } from "@/components/ui";
 import { GUJARAT_DISTRICTS } from "@/lib/constants";
 import { formatDate, formatDateTime } from "@/lib/format";
 
@@ -97,14 +97,14 @@ export default function TeamPage() {
         }
       />
 
-      <div className="flex flex-wrap gap-1.5 bg-white dark:bg-[#111a2e] p-1 rounded-xl border border-slate-200 dark:border-slate-800 w-fit text-xs mb-5">
+      <div className="flex overflow-x-auto no-scrollbar sm:flex-wrap gap-1.5 bg-white dark:bg-[#111a2e] p-1 rounded-xl border border-slate-200 dark:border-slate-800 w-full sm:w-fit max-w-full text-xs mb-5">
         {[
           { key: "employees", label: `Employees (${data?.employees?.length ?? 0})`, icon: <Users className="w-3.5 h-3.5" /> },
           { key: "performance", label: "Performance Metrics", icon: <BarChart3 className="w-3.5 h-3.5" /> },
           { key: "targets", label: "Monthly Targets", icon: <Target className="w-3.5 h-3.5" /> },
           { key: "activity", label: "Activity Logs", icon: <BarChart3 className="w-3.5 h-3.5" /> },
         ].map((t) => (
-          <button key={t.key} onClick={() => setTab(t.key as any)} className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold ${tab === t.key ? "bg-[#0B5CA8] text-white" : "text-slate-600 dark:text-slate-300"}`}>
+          <button key={t.key} onClick={() => setTab(t.key as any)} className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold shrink-0 ${tab === t.key ? "bg-[#0B5CA8] text-white" : "text-slate-600 dark:text-slate-300"}`}>
             {t.icon} {t.label}
           </button>
         ))}
@@ -117,85 +117,132 @@ export default function TeamPage() {
         <>
           {tab === "employees" && (
             <Card className="overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs text-left">
-                  <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-500 border-b">
-                    <tr>
-                      <th className="p-3">Employee ID</th>
-                      <th className="p-3">Full Name & Contact</th>
-                      <th className="p-3">Role</th>
-                      <th className="p-3">Operating Location</th>
-                      <th className="p-3">Reporting Manager</th>
-                      <th className="p-3">Joining Date</th>
-                      <th className="p-3">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              {data.employees.length === 0 ? <EmptyState title="No employees found" /> : (
+                <>
+                  <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
                     {data.employees.map((e: any) => (
-                      <tr key={e.id}>
-                        <td className="p-3 font-semibold text-[#0B5CA8]">{e.employeeCode}</td>
-                        <td className="p-3">
-                          <div className="font-semibold">{e.fullName}</div>
-                          <div className="text-[11px] text-slate-500">{e.mobile} · {e.email}</div>
-                        </td>
-                        <td className="p-3">{e.roleName}</td>
-                        <td className="p-3">{e.assignedCity}, {e.assignedDistrict}</td>
-                        <td className="p-3">{e.reportingManagerName}</td>
-                        <td className="p-3">{formatDate(e.joiningDate)}</td>
-                        <td className="p-3"><StatusBadge value={e.accountStatus} /></td>
-                      </tr>
+                      <div key={e.id} className="p-3.5 space-y-1.5 text-xs">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="font-semibold text-[#0B5CA8]">{e.employeeCode} · {e.fullName}</div>
+                            <div className="text-[11px] text-slate-500">{e.roleName}</div>
+                          </div>
+                          <StatusBadge value={e.accountStatus} />
+                        </div>
+                        <div className="text-[11px] text-slate-500">{e.mobile} · {e.email}</div>
+                        <div className="flex justify-between text-[11px] text-slate-400">
+                          <span>{e.assignedCity}, {e.assignedDistrict}</span>
+                          <span>Joined {formatDate(e.joiningDate)}</span>
+                        </div>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
-              </div>
+                  </div>
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full text-xs text-left">
+                      <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-500 border-b">
+                        <tr>
+                          <th className="p-3">Employee ID</th>
+                          <th className="p-3">Full Name & Contact</th>
+                          <th className="p-3">Role</th>
+                          <th className="p-3">Operating Location</th>
+                          <th className="p-3">Reporting Manager</th>
+                          <th className="p-3">Joining Date</th>
+                          <th className="p-3">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                        {data.employees.map((e: any) => (
+                          <tr key={e.id}>
+                            <td className="p-3 font-semibold text-[#0B5CA8]">{e.employeeCode}</td>
+                            <td className="p-3">
+                              <div className="font-semibold">{e.fullName}</div>
+                              <div className="text-[11px] text-slate-500">{e.mobile} · {e.email}</div>
+                            </td>
+                            <td className="p-3">{e.roleName}</td>
+                            <td className="p-3">{e.assignedCity}, {e.assignedDistrict}</td>
+                            <td className="p-3">{e.reportingManagerName}</td>
+                            <td className="p-3">{formatDate(e.joiningDate)}</td>
+                            <td className="p-3"><StatusBadge value={e.accountStatus} /></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
             </Card>
           )}
 
           {tab === "performance" && (
             <Card className="overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs text-left">
-                  <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-500 border-b">
-                    <tr>
-                      <th className="p-3">Employee</th>
-                      <th className="p-3 text-right">Assigned</th>
-                      <th className="p-3 text-right">Contacted</th>
-                      <th className="p-3 text-right">Interested</th>
-                      <th className="p-3 text-right">Qualified</th>
-                      <th className="p-3 text-right">Quotations</th>
-                      <th className="p-3 text-right">Confirmed</th>
-                      <th className="p-3 text-right">Collected</th>
-                      <th className="p-3 text-right">Completed</th>
-                      <th className="p-3 text-right">Follow-ups</th>
-                      <th className="p-3 text-right">Overdue</th>
-                      <th className="p-3 text-right">Resp (h)</th>
-                      <th className="p-3 text-right">Conv %</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              {data.employees.length === 0 ? <EmptyState title="No performance metrics yet" /> : (
+                <>
+                  <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
                     {data.employees.map((e: any) => (
-                      <tr key={e.id}>
-                        <td className="p-3">
-                          <div className="font-semibold">{e.fullName}</div>
-                          <div className="text-[10px] text-slate-400">{e.roleName}</div>
-                        </td>
-                        <td className="p-3 text-right font-semibold">{e.metrics.leadsAssigned}</td>
-                        <td className="p-3 text-right">{e.metrics.leadsContacted}</td>
-                        <td className="p-3 text-right">{e.metrics.interestedLeads}</td>
-                        <td className="p-3 text-right text-[#0B5CA8] font-semibold">{e.metrics.qualifiedLeads}</td>
-                        <td className="p-3 text-right">{e.metrics.quotationsGiven}</td>
-                        <td className="p-3 text-right">{e.metrics.dealsConfirmed}</td>
-                        <td className="p-3 text-right">{e.metrics.vehiclesCollected}</td>
-                        <td className="p-3 text-right font-bold text-emerald-600">{e.metrics.completedTransactions}</td>
-                        <td className="p-3 text-right">{e.metrics.followUpsCompleted}</td>
-                        <td className="p-3 text-right text-red-500 font-semibold">{e.metrics.overdueFollowUps}</td>
-                        <td className="p-3 text-right">{e.metrics.avgResponseHours}h</td>
-                        <td className="p-3 text-right font-bold">{e.metrics.conversionRate}%</td>
-                      </tr>
+                      <div key={e.id} className="p-3.5 space-y-2 text-xs">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="font-semibold">{e.fullName}</div>
+                            <div className="text-[11px] text-slate-400">{e.roleName}</div>
+                          </div>
+                          <span className="font-bold text-[#0B5CA8]">{e.metrics.conversionRate}% Conv</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-900/60 text-[11px] tabular-nums">
+                          <div><span className="text-slate-400 block">Assigned</span><strong>{e.metrics.leadsAssigned}</strong></div>
+                          <div><span className="text-slate-400 block">Qualified</span><strong className="text-[#0B5CA8]">{e.metrics.qualifiedLeads}</strong></div>
+                          <div><span className="text-slate-400 block">Completed</span><strong className="text-emerald-600">{e.metrics.completedTransactions}</strong></div>
+                          <div><span className="text-slate-400 block">Contacted</span><strong>{e.metrics.leadsContacted}</strong></div>
+                          <div><span className="text-slate-400 block">Quotes</span><strong>{e.metrics.quotationsGiven}</strong></div>
+                          <div><span className="text-slate-400 block">Overdue FU</span><strong className="text-red-500">{e.metrics.overdueFollowUps}</strong></div>
+                        </div>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
-              </div>
+                  </div>
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full text-xs text-left">
+                      <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-500 border-b">
+                        <tr>
+                          <th className="p-3">Employee</th>
+                          <th className="p-3 text-right">Assigned</th>
+                          <th className="p-3 text-right">Contacted</th>
+                          <th className="p-3 text-right">Interested</th>
+                          <th className="p-3 text-right">Qualified</th>
+                          <th className="p-3 text-right">Quotations</th>
+                          <th className="p-3 text-right">Confirmed</th>
+                          <th className="p-3 text-right">Collected</th>
+                          <th className="p-3 text-right">Completed</th>
+                          <th className="p-3 text-right">Follow-ups</th>
+                          <th className="p-3 text-right">Overdue</th>
+                          <th className="p-3 text-right">Resp (h)</th>
+                          <th className="p-3 text-right">Conv %</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                        {data.employees.map((e: any) => (
+                          <tr key={e.id}>
+                            <td className="p-3">
+                              <div className="font-semibold">{e.fullName}</div>
+                              <div className="text-[10px] text-slate-400">{e.roleName}</div>
+                            </td>
+                            <td className="p-3 text-right font-semibold">{e.metrics.leadsAssigned}</td>
+                            <td className="p-3 text-right">{e.metrics.leadsContacted}</td>
+                            <td className="p-3 text-right">{e.metrics.interestedLeads}</td>
+                            <td className="p-3 text-right text-[#0B5CA8] font-semibold">{e.metrics.qualifiedLeads}</td>
+                            <td className="p-3 text-right">{e.metrics.quotationsGiven}</td>
+                            <td className="p-3 text-right">{e.metrics.dealsConfirmed}</td>
+                            <td className="p-3 text-right">{e.metrics.vehiclesCollected}</td>
+                            <td className="p-3 text-right font-bold text-emerald-600">{e.metrics.completedTransactions}</td>
+                            <td className="p-3 text-right">{e.metrics.followUpsCompleted}</td>
+                            <td className="p-3 text-right text-red-500 font-semibold">{e.metrics.overdueFollowUps}</td>
+                            <td className="p-3 text-right">{e.metrics.avgResponseHours}h</td>
+                            <td className="p-3 text-right font-bold">{e.metrics.conversionRate}%</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
             </Card>
           )}
 
@@ -214,13 +261,13 @@ export default function TeamPage() {
                   ];
                   return (
                     <Card key={e.id} className="p-4 text-xs">
-                      <div className="flex items-center justify-between mb-3">
-                        <div>
-                          <div className="font-bold text-sm">{e.fullName}</div>
+                      <div className="flex items-center justify-between gap-2 mb-3">
+                        <div className="min-w-0">
+                          <div className="font-bold text-sm truncate">{e.fullName}</div>
                           <div className="text-[11px] text-slate-400">{e.roleName} · {e.assignedCity}</div>
                         </div>
                         {hasPerm("team:manage") && (
-                          <button onClick={() => setTargetEmp(JSON.parse(JSON.stringify(e)))} className="px-2.5 py-1 rounded border border-slate-200 dark:border-slate-700 hover:bg-slate-50">
+                          <button onClick={() => setTargetEmp(JSON.parse(JSON.stringify(e)))} className="px-2.5 py-1 rounded border border-slate-200 dark:border-slate-700 hover:bg-slate-50 shrink-0">
                             Edit Targets
                           </button>
                         )}
@@ -248,17 +295,21 @@ export default function TeamPage() {
           )}
 
           {tab === "activity" && (
-            <Card className="p-4 space-y-2 text-xs">
-              {data.activityLogs.map((a: any) => (
-                <div key={a.id} className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 flex justify-between gap-2">
-                  <div>
-                    <span className="font-semibold text-[#0B5CA8]">{a.performedBy?.fullName || "System"}</span> ·{" "}
-                    <Link href={`/leads/${a.lead.id}`} className="font-semibold hover:underline">{a.lead.leadCode}</Link> ({a.lead.customer.name})
-                    <div className="text-slate-600 dark:text-slate-300 mt-0.5">{a.summary}</div>
+            <Card className="p-3.5 sm:p-4 space-y-2 text-xs">
+              {data.activityLogs.length === 0 ? (
+                <EmptyState title="No employee activity logged yet" description="Lead calls, stage changes, follow-ups, and quotations will appear here." />
+              ) : (
+                data.activityLogs.map((a: any) => (
+                  <div key={a.id} className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 flex flex-col sm:flex-row sm:justify-between gap-1.5">
+                    <div className="min-w-0">
+                      <span className="font-semibold text-[#0B5CA8]">{a.performedBy?.fullName || "System"}</span> ·{" "}
+                      <Link href={`/leads/${a.lead.id}`} className="font-semibold hover:underline">{a.lead.leadCode}</Link> ({a.lead.customer.name})
+                      <div className="text-slate-600 dark:text-slate-300 mt-0.5 break-words">{a.summary}</div>
+                    </div>
+                    <span className="text-[11px] text-slate-400 shrink-0">{formatDateTime(a.createdAt)}</span>
                   </div>
-                  <span className="text-[11px] text-slate-400 shrink-0">{formatDateTime(a.createdAt)}</span>
-                </div>
-              ))}
+                ))
+              )}
             </Card>
           )}
         </>
@@ -274,7 +325,7 @@ export default function TeamPage() {
             <option value="">Select Role...</option>
             {(data?.roles || []).map((r: any) => <option key={r.id} value={r.id}>{r.name}</option>)}
           </select>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <select value={empForm.assignedDistrict} onChange={(e) => setEmpForm({ ...empForm, assignedDistrict: e.target.value })} className="px-3 py-2 rounded-lg border bg-white dark:bg-slate-900">
               {GUJARAT_DISTRICTS.map((d) => <option key={d.district} value={d.district}>{d.district}</option>)}
             </select>

@@ -114,7 +114,7 @@ function VehiclesContent() {
       />
 
       {/* Tabs */}
-      <div className="flex flex-wrap gap-1.5 bg-white dark:bg-[#111a2e] p-1 rounded-xl border border-slate-200 dark:border-slate-800 w-fit text-xs mb-4">
+      <div className="flex overflow-x-auto no-scrollbar sm:flex-wrap gap-1.5 bg-white dark:bg-[#111a2e] p-1 rounded-xl border border-slate-200 dark:border-slate-800 w-full sm:w-fit max-w-full text-xs mb-4">
         {[
           { key: "vehicles", label: `Vehicles (${data?.vehicles?.length ?? 0})`, icon: <Car className="w-3.5 h-3.5" /> },
           { key: "inspections", label: `Inspections (${data?.inspections?.length ?? 0})`, icon: <ClipboardCheck className="w-3.5 h-3.5" /> },
@@ -126,7 +126,7 @@ function VehiclesContent() {
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold shrink-0 ${
               tab === t.key ? "bg-[#0B5CA8] text-white" : "text-slate-600 dark:text-slate-300"
             }`}
           >
@@ -157,178 +157,239 @@ function VehiclesContent() {
           {tab === "vehicles" && (
             <Card className="overflow-hidden">
               {data.vehicles.length === 0 ? <EmptyState /> : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs text-left">
-                    <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-500 border-b">
-                      <tr>
-                        <th className="p-3">Vehicle ID & Reg</th>
-                        <th className="p-3">Make / Model / Year</th>
-                        <th className="p-3">Customer & Location</th>
-                        <th className="p-3">Condition & Fuel</th>
-                        <th className="p-3">RC & Docs Status</th>
-                        <th className="p-3">Purchase Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                      {data.vehicles.map((v: any) => (
-                        <tr key={v.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
-                          <td className="p-3">
+                <>
+                  <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+                    {data.vehicles.map((v: any) => (
+                      <div key={v.id} className="p-3.5 space-y-2 text-xs">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
                             <div className="font-bold text-[#0B5CA8]">{v.registrationNumber}</div>
-                            <div className="text-[11px] text-slate-400">{v.vehicleCode}</div>
-                          </td>
-                          <td className="p-3">
-                            <div className="font-semibold">{v.manufacturer} {v.model} {v.variant || ""}</div>
-                            <div className="text-[11px] text-slate-400">{v.category} · {v.manufacturingYear}</div>
-                          </td>
-                          <td className="p-3">
-                            <div>{v.customer.name} ({v.customer.primaryMobile})</div>
-                            <div className="text-[11px] text-slate-400">{v.locationCity}, {v.locationDistrict}</div>
-                          </td>
-                          <td className="p-3">
-                            <div>{v.runningCondition} · {v.fuelType}</div>
-                            <div className="text-[11px] text-slate-400">Engine: {v.engineCondition}</div>
-                          </td>
-                          <td className="p-3">
-                            <div>RC: {v.rcAvailable}</div>
-                            <StatusBadge value={v.documentVerificationStatus} className="mt-1" />
-                          </td>
-                          <td className="p-3"><StatusBadge value={v.purchaseStatus} /></td>
+                            <div className="text-[11px] text-slate-400">{v.vehicleCode} · {v.manufacturer} {v.model} ({v.manufacturingYear})</div>
+                          </div>
+                          <StatusBadge value={v.purchaseStatus} className="shrink-0" />
+                        </div>
+                        <div className="text-[11px] text-slate-600 dark:text-slate-300">
+                          {v.customer.name} ({v.customer.primaryMobile}) · {v.locationCity}, {v.locationDistrict}
+                        </div>
+                        <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] pt-1">
+                          <span className="text-slate-500">{v.runningCondition} · {v.fuelType} · RC: {v.rcAvailable}</span>
+                          <StatusBadge value={v.documentVerificationStatus} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full text-xs text-left">
+                      <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-500 border-b">
+                        <tr>
+                          <th className="p-3">Vehicle ID & Reg</th>
+                          <th className="p-3">Make / Model / Year</th>
+                          <th className="p-3">Customer & Location</th>
+                          <th className="p-3">Condition & Fuel</th>
+                          <th className="p-3">RC & Docs Status</th>
+                          <th className="p-3">Purchase Status</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                        {data.vehicles.map((v: any) => (
+                          <tr key={v.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
+                            <td className="p-3">
+                              <div className="font-bold text-[#0B5CA8]">{v.registrationNumber}</div>
+                              <div className="text-[11px] text-slate-400">{v.vehicleCode}</div>
+                            </td>
+                            <td className="p-3">
+                              <div className="font-semibold">{v.manufacturer} {v.model} {v.variant || ""}</div>
+                              <div className="text-[11px] text-slate-400">{v.category} · {v.manufacturingYear}</div>
+                            </td>
+                            <td className="p-3">
+                              <div>{v.customer.name} ({v.customer.primaryMobile})</div>
+                              <div className="text-[11px] text-slate-400">{v.locationCity}, {v.locationDistrict}</div>
+                            </td>
+                            <td className="p-3">
+                              <div>{v.runningCondition} · {v.fuelType}</div>
+                              <div className="text-[11px] text-slate-400">Engine: {v.engineCondition}</div>
+                            </td>
+                            <td className="p-3">
+                              <div>RC: {v.rcAvailable}</div>
+                              <StatusBadge value={v.documentVerificationStatus} className="mt-1" />
+                            </td>
+                            <td className="p-3"><StatusBadge value={v.purchaseStatus} /></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
               )}
             </Card>
           )}
 
           {tab === "inspections" && (
             <Card className="overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs text-left">
-                  <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-500 border-b">
-                    <tr>
-                      <th className="p-3">Inspection ID</th>
-                      <th className="p-3">Vehicle</th>
-                      <th className="p-3">Inspector & Date</th>
-                      <th className="p-3">Condition Assessment</th>
-                      <th className="p-3 text-right">Est. Purchase Value</th>
-                      <th className="p-3">Result</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              {data.inspections.length === 0 ? <EmptyState title="No inspection records yet" description="Use '+ Inspection' to log a vehicle condition assessment." /> : (
+                <>
+                  <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
                     {data.inspections.map((i: any) => (
-                      <tr key={i.id}>
-                        <td className="p-3 font-semibold">{i.inspectionCode}</td>
-                        <td className="p-3">
-                          <div className="font-semibold">{i.vehicle.registrationNumber}</div>
-                          <div className="text-[11px] text-slate-400">{i.vehicle.manufacturer} {i.vehicle.model}</div>
-                        </td>
-                        <td className="p-3">
-                          <div>{i.inspector.fullName}</div>
-                          <div className="text-[11px] text-slate-400">{formatDate(i.inspectionDate)}</div>
-                        </td>
-                        <td className="p-3 max-w-xs">
-                          <div>Eng: {i.engineCondition} | Body: {i.bodyCondition} | Tyre: {i.tyreCondition}</div>
-                          <div className="text-[11px] text-slate-400 truncate">{i.accidentHistory || i.notes}</div>
-                        </td>
-                        <td className="p-3 text-right font-bold">{formatINR(i.estimatedPurchaseValue)}</td>
-                        <td className="p-3"><StatusBadge value={i.result} /></td>
-                      </tr>
+                      <div key={i.id} className="p-3.5 space-y-1.5 text-xs">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="font-bold">{i.inspectionCode} · {i.vehicle.registrationNumber}</div>
+                            <div className="text-[11px] text-slate-400">{i.vehicle.manufacturer} {i.vehicle.model}</div>
+                          </div>
+                          <StatusBadge value={i.result} />
+                        </div>
+                        <div className="text-[11px] text-slate-500">By {i.inspector.fullName} on {formatDate(i.inspectionDate)}</div>
+                        <div className="text-[11px]">Eng: {i.engineCondition} | Body: {i.bodyCondition} | Tyre: {i.tyreCondition}</div>
+                        <div className="font-bold text-[#0B5CA8]">Est. Value: {formatINR(i.estimatedPurchaseValue)}</div>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
-              </div>
+                  </div>
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full text-xs text-left">
+                      <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-500 border-b">
+                        <tr>
+                          <th className="p-3">Inspection ID</th>
+                          <th className="p-3">Vehicle</th>
+                          <th className="p-3">Inspector & Date</th>
+                          <th className="p-3">Condition Assessment</th>
+                          <th className="p-3 text-right">Est. Purchase Value</th>
+                          <th className="p-3">Result</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                        {data.inspections.map((i: any) => (
+                          <tr key={i.id}>
+                            <td className="p-3 font-semibold">{i.inspectionCode}</td>
+                            <td className="p-3">
+                              <div className="font-semibold">{i.vehicle.registrationNumber}</div>
+                              <div className="text-[11px] text-slate-400">{i.vehicle.manufacturer} {i.vehicle.model}</div>
+                            </td>
+                            <td className="p-3">
+                              <div>{i.inspector.fullName}</div>
+                              <div className="text-[11px] text-slate-400">{formatDate(i.inspectionDate)}</div>
+                            </td>
+                            <td className="p-3 max-w-xs">
+                              <div>Eng: {i.engineCondition} | Body: {i.bodyCondition} | Tyre: {i.tyreCondition}</div>
+                              <div className="text-[11px] text-slate-400 truncate">{i.accidentHistory || i.notes}</div>
+                            </td>
+                            <td className="p-3 text-right font-bold">{formatINR(i.estimatedPurchaseValue)}</td>
+                            <td className="p-3"><StatusBadge value={i.result} /></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
             </Card>
           )}
 
           {tab === "quotations" && (
             <Card className="overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs text-left">
-                  <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-500 border-b">
-                    <tr>
-                      <th className="p-3">Quotation ID</th>
-                      <th className="p-3">Vehicle & Customer</th>
-                      <th className="p-3 text-right">Offered Price</th>
-                      <th className="p-3">Prepared / Valid</th>
-                      <th className="p-3">Approval</th>
-                      <th className="p-3">Customer Acceptance</th>
-                      <th className="p-3">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              {data.quotations.length === 0 ? <EmptyState title="No quotations submitted yet" description="Create a scrap purchase quotation for an eligible vehicle." /> : (
+                <>
+                  <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
                     {data.quotations.map((q: any) => (
-                      <tr key={q.id}>
-                        <td className="p-3">
-                          <div className="font-semibold">{q.quotationCode}</div>
-                          <span className="text-[11px] text-slate-400">Rev #{q.revisionNumber}</span>
-                        </td>
-                        <td className="p-3">
-                          <div className="font-semibold">{q.vehicle.registrationNumber} ({q.vehicle.model})</div>
-                          <div className="text-[11px] text-slate-400">{q.customer.name} · {q.customer.city}</div>
-                        </td>
-                        <td className="p-3 text-right font-bold text-[#0B5CA8]">{formatINR(q.offeredPurchasePrice)}</td>
-                        <td className="p-3">
-                          <div>{q.preparedBy.fullName}</div>
-                          <div className="text-[11px] text-slate-400">Valid {formatDate(q.validityDate)}</div>
-                        </td>
-                        <td className="p-3"><StatusBadge value={q.approvalStatus} /></td>
-                        <td className="p-3"><StatusBadge value={q.customerAcceptanceStatus} /></td>
-                        <td className="p-3">
-                          <div className="flex flex-wrap gap-1">
-                            {q.approvalStatus === "Pending Approval" && hasPerm("quotations:approve") && (
-                              <button onClick={() => patchAction(q.id, { action: "quotation_status", approvalStatus: "Approved" })} className="px-2 py-1 rounded bg-emerald-600 text-white font-medium">
-                                Approve
-                              </button>
-                            )}
-                            {q.approvalStatus === "Approved" && q.customerAcceptanceStatus !== "Accepted" && (
-                              <button onClick={() => patchAction(q.id, { action: "quotation_status", customerAcceptanceStatus: "Accepted" })} className="px-2 py-1 rounded bg-[#0B5CA8] text-white font-medium">
-                                Mark Accepted
-                              </button>
-                            )}
+                      <div key={q.id} className="p-3.5 space-y-2 text-xs">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="font-bold">{q.quotationCode} (Rev #{q.revisionNumber})</div>
+                            <div className="text-[11px] text-slate-500">{q.vehicle.registrationNumber} ({q.vehicle.model}) · {q.customer.name}</div>
                           </div>
-                        </td>
-                      </tr>
+                          <div className="text-right font-bold text-[#0B5CA8]">{formatINR(q.offeredPurchasePrice)}</div>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          <StatusBadge value={q.approvalStatus} />
+                          <StatusBadge value={q.customerAcceptanceStatus} />
+                        </div>
+                        <div className="text-[11px] text-slate-400">Prepared by {q.preparedBy.fullName} · Valid {formatDate(q.validityDate)}</div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {q.approvalStatus === "Pending Approval" && hasPerm("quotations:approve") && (
+                            <button onClick={() => patchAction(q.id, { action: "quotation_status", approvalStatus: "Approved" })} className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-semibold">
+                              Approve
+                            </button>
+                          )}
+                          {q.approvalStatus === "Approved" && q.customerAcceptanceStatus !== "Accepted" && (
+                            <button onClick={() => patchAction(q.id, { action: "quotation_status", customerAcceptanceStatus: "Accepted" })} className="px-3 py-1.5 rounded-lg bg-[#0B5CA8] text-white font-semibold">
+                              Mark Accepted
+                            </button>
+                          )}
+                        </div>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
-              </div>
+                  </div>
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full text-xs text-left">
+                      <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-500 border-b">
+                        <tr>
+                          <th className="p-3">Quotation ID</th>
+                          <th className="p-3">Vehicle & Customer</th>
+                          <th className="p-3 text-right">Offered Price</th>
+                          <th className="p-3">Prepared / Valid</th>
+                          <th className="p-3">Approval</th>
+                          <th className="p-3">Customer Acceptance</th>
+                          <th className="p-3">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                        {data.quotations.map((q: any) => (
+                          <tr key={q.id}>
+                            <td className="p-3">
+                              <div className="font-semibold">{q.quotationCode}</div>
+                              <span className="text-[11px] text-slate-400">Rev #{q.revisionNumber}</span>
+                            </td>
+                            <td className="p-3">
+                              <div className="font-semibold">{q.vehicle.registrationNumber} ({q.vehicle.model})</div>
+                              <div className="text-[11px] text-slate-400">{q.customer.name} · {q.customer.city}</div>
+                            </td>
+                            <td className="p-3 text-right font-bold text-[#0B5CA8]">{formatINR(q.offeredPurchasePrice)}</td>
+                            <td className="p-3">
+                              <div>{q.preparedBy.fullName}</div>
+                              <div className="text-[11px] text-slate-400">Valid {formatDate(q.validityDate)}</div>
+                            </td>
+                            <td className="p-3"><StatusBadge value={q.approvalStatus} /></td>
+                            <td className="p-3"><StatusBadge value={q.customerAcceptanceStatus} /></td>
+                            <td className="p-3">
+                              <div className="flex flex-wrap gap-1">
+                                {q.approvalStatus === "Pending Approval" && hasPerm("quotations:approve") && (
+                                  <button onClick={() => patchAction(q.id, { action: "quotation_status", approvalStatus: "Approved" })} className="px-2 py-1 rounded bg-emerald-600 text-white font-medium">
+                                    Approve
+                                  </button>
+                                )}
+                                {q.approvalStatus === "Approved" && q.customerAcceptanceStatus !== "Accepted" && (
+                                  <button onClick={() => patchAction(q.id, { action: "quotation_status", customerAcceptanceStatus: "Accepted" })} className="px-2 py-1 rounded bg-[#0B5CA8] text-white font-medium">
+                                    Mark Accepted
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
             </Card>
           )}
 
           {tab === "pickup" && (
             <Card className="overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs text-left">
-                  <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-500 border-b">
-                    <tr>
-                      <th className="p-3">Pickup ID</th>
-                      <th className="p-3">Vehicle & Customer</th>
-                      <th className="p-3">Pickup Location</th>
-                      <th className="p-3">Driver & Vendor</th>
-                      <th className="p-3">Scheduled / Expense</th>
-                      <th className="p-3">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              {data.pickups.length === 0 ? <EmptyState title="No vehicle pickups scheduled" description="Schedule a pickup once a customer accepts a purchase quote." /> : (
+                <>
+                  <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
                     {data.pickups.map((p: any) => (
-                      <tr key={p.id}>
-                        <td className="p-3 font-semibold">{p.pickupCode}</td>
-                        <td className="p-3">
-                          <div className="font-semibold">{p.vehicle.registrationNumber} ({p.vehicle.model})</div>
-                          <div className="text-[11px] text-slate-400">{p.customer.name} · {p.customer.primaryMobile}</div>
-                        </td>
-                        <td className="p-3">{p.pickupAddress}</td>
-                        <td className="p-3">
-                          <div>{p.assignedDriver || "TBD"}</div>
-                          <div className="text-[11px] text-slate-400">{p.assignedVendor || "—"}</div>
-                        </td>
-                        <td className="p-3">
-                          <div>{p.scheduledDate ? formatDate(p.scheduledDate) : "Not scheduled"}</div>
-                          <div className="text-[11px] text-slate-400">Exp: {formatINR(p.pickupExpenses)}</div>
-                        </td>
-                        <td className="p-3">
+                      <div key={p.id} className="p-3.5 space-y-2 text-xs">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="font-bold">{p.pickupCode} · {p.vehicle.registrationNumber}</div>
+                            <div className="text-[11px] text-slate-500">{p.customer.name} ({p.customer.primaryMobile})</div>
+                          </div>
+                          <span className="text-[11px] font-semibold">Exp: {formatINR(p.pickupExpenses)}</span>
+                        </div>
+                        <div className="text-[11px] text-slate-600 dark:text-slate-300">{p.pickupAddress}</div>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[11px] text-slate-400">{p.assignedDriver || "Driver TBD"} · {p.scheduledDate ? formatDate(p.scheduledDate) : "No date"}</span>
                           <select
                             value={p.pickupStatus}
                             disabled={!hasPerm("vehicles:manage")}
@@ -337,98 +398,155 @@ function VehiclesContent() {
                           >
                             {PICKUP_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
                           </select>
-                        </td>
-                      </tr>
+                        </div>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
-              </div>
+                  </div>
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full text-xs text-left">
+                      <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-500 border-b">
+                        <tr>
+                          <th className="p-3">Pickup ID</th>
+                          <th className="p-3">Vehicle & Customer</th>
+                          <th className="p-3">Pickup Location</th>
+                          <th className="p-3">Driver & Vendor</th>
+                          <th className="p-3">Scheduled / Expense</th>
+                          <th className="p-3">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                        {data.pickups.map((p: any) => (
+                          <tr key={p.id}>
+                            <td className="p-3 font-semibold">{p.pickupCode}</td>
+                            <td className="p-3">
+                              <div className="font-semibold">{p.vehicle.registrationNumber} ({p.vehicle.model})</div>
+                              <div className="text-[11px] text-slate-400">{p.customer.name} · {p.customer.primaryMobile}</div>
+                            </td>
+                            <td className="p-3">{p.pickupAddress}</td>
+                            <td className="p-3">
+                              <div>{p.assignedDriver || "TBD"}</div>
+                              <div className="text-[11px] text-slate-400">{p.assignedVendor || "—"}</div>
+                            </td>
+                            <td className="p-3">
+                              <div>{p.scheduledDate ? formatDate(p.scheduledDate) : "Not scheduled"}</div>
+                              <div className="text-[11px] text-slate-400">Exp: {formatINR(p.pickupExpenses)}</div>
+                            </td>
+                            <td className="p-3">
+                              <select
+                                value={p.pickupStatus}
+                                disabled={!hasPerm("vehicles:manage")}
+                                onChange={(e) => patchAction(p.id, { action: "pickup_status", pickupStatus: e.target.value })}
+                                className="px-2 py-1 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium"
+                              >
+                                {PICKUP_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                              </select>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
             </Card>
           )}
 
           {tab === "documents" && (
             <div className="space-y-4">
-              <div className="rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 px-4 py-3 text-xs text-blue-900 dark:text-blue-200 flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0 text-[#0B5CA8]" />
+              <div className="rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 px-4 py-3 text-xs text-blue-900 dark:text-blue-200 flex items-start sm:items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-[#0B5CA8] mt-0.5 sm:mt-0" />
                 <span>
                   <strong>Legal Compliance Rule:</strong> A collected vehicle does not automatically satisfy legal scrapping formalities. Ensure RC, Ownership, Identity, Handover & Scrapping Certificates are individually verified below.
                 </span>
               </div>
 
               <Card className="overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs text-left">
-                    <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-500 border-b">
-                      <tr>
-                        <th className="p-3">Doc ID</th>
-                        <th className="p-3">Vehicle</th>
-                        <th className="p-3">Document Type</th>
-                        <th className="p-3">File & Remarks</th>
-                        <th className="p-3">Upload Date</th>
-                        <th className="p-3">Verification</th>
-                        <th className="p-3">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                {data.documents.length === 0 ? <EmptyState title="No vehicle documents uploaded yet" description="Add RC, Ownership, Identity, or Scrapping Certificate records." /> : (
+                  <>
+                    <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
                       {data.documents.map((d: any) => (
-                        <tr key={d.id}>
-                          <td className="p-3 font-semibold">{d.documentCode}</td>
-                          <td className="p-3 font-medium">{d.vehicle.registrationNumber} ({d.vehicle.model})</td>
-                          <td className="p-3">{d.documentType}</td>
-                          <td className="p-3">
-                            <div className="font-mono text-[11px]">{d.fileName}</div>
-                            <div className="text-[11px] text-slate-400">{d.verificationRemarks}</div>
-                          </td>
-                          <td className="p-3">{formatDate(d.uploadDate)}</td>
-                          <td className="p-3"><StatusBadge value={d.verificationStatus} /></td>
-                          <td className="p-3">
+                        <div key={d.id} className="p-3.5 space-y-2 text-xs">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <div className="font-bold">{d.documentCode} · {d.documentType}</div>
+                              <div className="text-[11px] text-slate-500">{d.vehicle.registrationNumber} ({d.vehicle.model})</div>
+                            </div>
+                            <StatusBadge value={d.verificationStatus} className="shrink-0" />
+                          </div>
+                          <div className="font-mono text-[11px] break-all text-slate-600 dark:text-slate-300">{d.fileName}</div>
+                          {d.verificationRemarks && <div className="text-[11px] text-slate-400">{d.verificationRemarks}</div>}
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[11px] text-slate-400">Uploaded {formatDate(d.uploadDate)}</span>
                             {hasPerm("vehicles:manage") && d.verificationStatus !== "Verified" && (
                               <button
                                 onClick={() => patchAction(d.id, { action: "document_verify", verificationStatus: "Verified", verificationRemarks: "Verified by Operations" })}
-                                className="px-2.5 py-1 rounded bg-emerald-600 text-white font-medium"
+                                className="px-3 py-1 rounded-lg bg-emerald-600 text-white font-semibold"
                               >
                                 Verify
                               </button>
                             )}
-                          </td>
-                        </tr>
+                          </div>
+                        </div>
                       ))}
-                    </tbody>
-                  </table>
-                </div>
+                    </div>
+                    <div className="hidden md:block overflow-x-auto">
+                      <table className="w-full text-xs text-left">
+                        <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-500 border-b">
+                          <tr>
+                            <th className="p-3">Doc ID</th>
+                            <th className="p-3">Vehicle</th>
+                            <th className="p-3">Document Type</th>
+                            <th className="p-3">File & Remarks</th>
+                            <th className="p-3">Upload Date</th>
+                            <th className="p-3">Verification</th>
+                            <th className="p-3">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                          {data.documents.map((d: any) => (
+                            <tr key={d.id}>
+                              <td className="p-3 font-semibold">{d.documentCode}</td>
+                              <td className="p-3 font-medium">{d.vehicle.registrationNumber} ({d.vehicle.model})</td>
+                              <td className="p-3">{d.documentType}</td>
+                              <td className="p-3">
+                                <div className="font-mono text-[11px] break-all">{d.fileName}</div>
+                                <div className="text-[11px] text-slate-400">{d.verificationRemarks}</div>
+                              </td>
+                              <td className="p-3">{formatDate(d.uploadDate)}</td>
+                              <td className="p-3"><StatusBadge value={d.verificationStatus} /></td>
+                              <td className="p-3">
+                                {hasPerm("vehicles:manage") && d.verificationStatus !== "Verified" && (
+                                  <button
+                                    onClick={() => patchAction(d.id, { action: "document_verify", verificationStatus: "Verified", verificationRemarks: "Verified by Operations" })}
+                                    className="px-2.5 py-1 rounded bg-emerald-600 text-white font-medium"
+                                  >
+                                    Verify
+                                  </button>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                )}
               </Card>
             </div>
           )}
 
           {tab === "inventory" && (
             <Card className="overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs text-left">
-                  <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-500 border-b">
-                    <tr>
-                      <th className="p-3">Inventory ID</th>
-                      <th className="p-3">Vehicle</th>
-                      <th className="p-3">Collection & Yard Bay</th>
-                      <th className="p-3 text-right">Estimated Value</th>
-                      <th className="p-3 text-right">Actual Realization</th>
-                      <th className="p-3">Processing Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              {data.inventory.length === 0 ? <EmptyState title="No collected yard inventory yet" description="Collected vehicles are added to yard inventory automatically." /> : (
+                <>
+                  <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
                     {data.inventory.map((inv: any) => (
-                      <tr key={inv.id}>
-                        <td className="p-3 font-semibold">{inv.inventoryCode}</td>
-                        <td className="p-3">
-                          <div className="font-semibold">{inv.vehicle.registrationNumber}</div>
-                          <div className="text-[11px] text-slate-400">{inv.vehicle.manufacturer} {inv.vehicle.model}</div>
-                        </td>
-                        <td className="p-3">
-                          <div>{inv.currentLocation} ({inv.storageLocation})</div>
-                          <div className="text-[11px] text-slate-400">Collected {formatDate(inv.collectionDate)}</div>
-                        </td>
-                        <td className="p-3 text-right font-medium text-slate-500">{formatINR(inv.estimatedValue)}</td>
-                        <td className="p-3 text-right font-bold text-emerald-600">{formatINR(inv.actualRealizationValue)}</td>
-                        <td className="p-3">
+                      <div key={inv.id} className="p-3.5 space-y-2 text-xs">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="font-bold">{inv.inventoryCode} · {inv.vehicle.registrationNumber}</div>
+                            <div className="text-[11px] text-slate-500">{inv.vehicle.manufacturer} {inv.vehicle.model}</div>
+                          </div>
                           <select
                             value={inv.processingStatus}
                             disabled={!hasPerm("vehicles:manage")}
@@ -437,12 +555,58 @@ function VehiclesContent() {
                           >
                             {PROCESSING_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
                           </select>
-                        </td>
-                      </tr>
+                        </div>
+                        <div className="text-[11px] text-slate-500">{inv.currentLocation} ({inv.storageLocation}) · Collected {formatDate(inv.collectionDate)}</div>
+                        <div className="flex justify-between text-[11px]">
+                          <span>Est: <strong>{formatINR(inv.estimatedValue)}</strong></span>
+                          <span className="text-emerald-600 font-bold">Realized: {formatINR(inv.actualRealizationValue)}</span>
+                        </div>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
-              </div>
+                  </div>
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full text-xs text-left">
+                      <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-500 border-b">
+                        <tr>
+                          <th className="p-3">Inventory ID</th>
+                          <th className="p-3">Vehicle</th>
+                          <th className="p-3">Collection & Yard Bay</th>
+                          <th className="p-3 text-right">Estimated Value</th>
+                          <th className="p-3 text-right">Actual Realization</th>
+                          <th className="p-3">Processing Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                        {data.inventory.map((inv: any) => (
+                          <tr key={inv.id}>
+                            <td className="p-3 font-semibold">{inv.inventoryCode}</td>
+                            <td className="p-3">
+                              <div className="font-semibold">{inv.vehicle.registrationNumber}</div>
+                              <div className="text-[11px] text-slate-400">{inv.vehicle.manufacturer} {inv.vehicle.model}</div>
+                            </td>
+                            <td className="p-3">
+                              <div>{inv.currentLocation} ({inv.storageLocation})</div>
+                              <div className="text-[11px] text-slate-400">Collected {formatDate(inv.collectionDate)}</div>
+                            </td>
+                            <td className="p-3 text-right font-medium text-slate-500">{formatINR(inv.estimatedValue)}</td>
+                            <td className="p-3 text-right font-bold text-emerald-600">{formatINR(inv.actualRealizationValue)}</td>
+                            <td className="p-3">
+                              <select
+                                value={inv.processingStatus}
+                                disabled={!hasPerm("vehicles:manage")}
+                                onChange={(e) => patchAction(inv.id, { action: "inventory_status", processingStatus: e.target.value })}
+                                className="px-2 py-1 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium"
+                              >
+                                {PROCESSING_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                              </select>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
             </Card>
           )}
         </>
@@ -455,7 +619,7 @@ function VehiclesContent() {
             <option value="">Select Customer...</option>
             {(data?.options?.customers || []).map((c: any) => <option key={c.id} value={c.id}>{c.name} ({c.primaryMobile})</option>)}
           </select>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <input required placeholder="Reg Number (GJ-01-XX-0000)" value={vehForm.registrationNumber} onChange={(e) => setVehForm({ ...vehForm, registrationNumber: e.target.value })} className="px-3 py-2 rounded-lg border bg-transparent uppercase" />
             <input type="number" required placeholder="Year" value={vehForm.manufacturingYear} onChange={(e) => setVehForm({ ...vehForm, manufacturingYear: e.target.value })} className="px-3 py-2 rounded-lg border bg-transparent" />
             <select value={vehForm.manufacturer} onChange={(e) => setVehForm({ ...vehForm, manufacturer: e.target.value })} className="px-3 py-2 rounded-lg border bg-white dark:bg-slate-900">
@@ -482,7 +646,7 @@ function VehiclesContent() {
             <option value="">Select Vehicle...</option>
             {(data?.vehicles || []).map((v: any) => <option key={v.id} value={v.id}>{v.registrationNumber} — {v.manufacturer} {v.model}</option>)}
           </select>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <input type="number" required placeholder="Est. Purchase Value (₹)" value={inspForm.estimatedPurchaseValue} onChange={(e) => setInspForm({ ...inspForm, estimatedPurchaseValue: e.target.value })} className="px-3 py-2 rounded-lg border bg-transparent" />
             <select value={inspForm.result} onChange={(e) => setInspForm({ ...inspForm, result: e.target.value })} className="px-3 py-2 rounded-lg border bg-white dark:bg-slate-900">
               <option value="Eligible">Eligible</option>
@@ -522,7 +686,7 @@ function VehiclesContent() {
             {(data?.vehicles || []).map((v: any) => <option key={v.id} value={v.id}>{v.registrationNumber} — {v.locationCity}</option>)}
           </select>
           <input required placeholder="Pickup Address" value={pkpForm.pickupAddress} onChange={(e) => setPkpForm({ ...pkpForm, pickupAddress: e.target.value })} className="w-full px-3 py-2 rounded-lg border bg-transparent" />
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <input type="date" value={pkpForm.scheduledDate} onChange={(e) => setPkpForm({ ...pkpForm, scheduledDate: e.target.value })} className="px-3 py-2 rounded-lg border bg-transparent" />
             <input type="number" placeholder="Pickup Expense (₹)" value={pkpForm.pickupExpenses} onChange={(e) => setPkpForm({ ...pkpForm, pickupExpenses: e.target.value })} className="px-3 py-2 rounded-lg border bg-transparent" />
           </div>

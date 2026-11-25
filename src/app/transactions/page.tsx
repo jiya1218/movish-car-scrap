@@ -120,14 +120,14 @@ function TransactionsContent() {
             <KpiCard label="Net Profit" value={data.summary.netProfit} format="currency" icon={<TrendingUp className="w-4 h-4" />} desc={`Profit Margin ${data.summary.profitMargin.toFixed(1)}% | Avg ${formatINR(data.summary.averageNetProfit)}`} />
           </div>
 
-          <div className="flex flex-wrap gap-1.5 bg-white dark:bg-[#111a2e] p-1 rounded-xl border border-slate-200 dark:border-slate-800 w-fit text-xs">
+          <div className="flex overflow-x-auto no-scrollbar sm:flex-wrap gap-1.5 bg-white dark:bg-[#111a2e] p-1 rounded-xl border border-slate-200 dark:border-slate-800 w-full sm:w-fit max-w-full text-xs">
             {[
               { key: "transactions", label: `Purchases & Txns (${data.transactions.length})` },
               { key: "expenses", label: `Expenses (${data.expenses.length})` },
               { key: "revenues", label: `Realization / Revenue (${data.revenues.length})` },
               { key: "payments", label: `Payments (${data.payments.length})` },
             ].map((t) => (
-              <button key={t.key} onClick={() => setTab(t.key as any)} className={`px-3 py-1.5 rounded-lg font-semibold ${tab === t.key ? "bg-[#0B5CA8] text-white" : "text-slate-600 dark:text-slate-300"}`}>
+              <button key={t.key} onClick={() => setTab(t.key as any)} className={`px-3 py-1.5 rounded-lg font-semibold shrink-0 ${tab === t.key ? "bg-[#0B5CA8] text-white" : "text-slate-600 dark:text-slate-300"}`}>
                 {t.label}
               </button>
             ))}
@@ -156,159 +156,265 @@ function TransactionsContent() {
 
           {tab === "transactions" && (
             <Card className="overflow-hidden">
-              {data.transactions.length === 0 ? <EmptyState /> : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs text-left">
-                    <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-500 border-b">
-                      <tr>
-                        <th className="p-3">Txn ID & Date</th>
-                        <th className="p-3">Vehicle & Customer</th>
-                        <th className="p-3 text-right">Purchase Amount</th>
-                        <th className="p-3 text-right">Ops Expenses</th>
-                        <th className="p-3 text-right">Realized Value</th>
-                        <th className="p-3">Payment</th>
-                        <th className="p-3">Status</th>
-                        <th className="p-3">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                      {data.transactions.map((t: any) => {
-                        const opsExp = t.pickupExpense + t.transportationExpense + t.labourExpense + t.processingExpense + t.otherExpenses;
-                        return (
-                          <tr key={t.id}>
-                            <td className="p-3">
-                              <div className="font-semibold text-[#0B5CA8]">{t.transactionCode}</div>
-                              <div className="text-[11px] text-slate-400">{formatDate(t.transactionDate)}</div>
-                            </td>
-                            <td className="p-3">
+              {data.transactions.length === 0 ? <EmptyState title="No purchase transactions yet" description="Record a vehicle purchase transaction to begin financial tracking." /> : (
+                <>
+                  <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+                    {data.transactions.map((t: any) => {
+                      const opsExp = t.pickupExpense + t.transportationExpense + t.labourExpense + t.processingExpense + t.otherExpenses;
+                      return (
+                        <div key={t.id} className="p-3.5 space-y-2 text-xs">
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <div className="font-bold text-[#0B5CA8]">{t.transactionCode}</div>
                               <div className="font-semibold">{t.vehicle.registrationNumber} ({t.vehicle.model})</div>
-                              <div className="text-[11px] text-slate-400">{t.customer.name} · {t.customer.city}</div>
-                            </td>
-                            <td className="p-3 text-right font-semibold tabular-nums">{formatINR(t.vehiclePurchaseAmount)}</td>
-                            <td className="p-3 text-right text-amber-600 tabular-nums">{formatINR(opsExp)}</td>
-                            <td className="p-3 text-right font-bold text-emerald-600 tabular-nums">{formatINR(t.realizationValue)}</td>
-                            <td className="p-3">
+                              <div className="text-[11px] text-slate-400">{t.customer.name} · {t.customer.city} · {formatDate(t.transactionDate)}</div>
+                            </div>
+                            <div className="flex flex-col items-end gap-1 shrink-0">
                               <StatusBadge value={t.paymentStatus} />
-                              <div className="text-[10px] text-slate-400 mt-0.5">{t.paymentReference || t.paymentMethod}</div>
-                            </td>
-                            <td className="p-3"><StatusBadge value={t.transactionStatus} /></td>
-                            <td className="p-3">
-                              {hasPerm("finance:manage") && (
-                                <button
-                                  onClick={() => {
-                                    setSelectedTxn(t);
-                                    setPayForm({ paymentStatus: t.paymentStatus, paymentReference: t.paymentReference || "", notes: "" });
-                                    setModal("payment");
-                                  }}
-                                  className="inline-flex items-center gap-1 px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 hover:bg-[#0B5CA8] hover:text-white"
-                                >
-                                  <CreditCard className="w-3 h-3" /> Update
-                                </button>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+                              <StatusBadge value={t.transactionStatus} />
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-900/60 text-[11px] tabular-nums">
+                            <div><span className="text-slate-400 block">Purchase</span><strong>{formatINR(t.vehiclePurchaseAmount)}</strong></div>
+                            <div><span className="text-slate-400 block">Ops Exp</span><strong className="text-amber-600">{formatINR(opsExp)}</strong></div>
+                            <div><span className="text-slate-400 block">Realized</span><strong className="text-emerald-600">{formatINR(t.realizationValue)}</strong></div>
+                          </div>
+                          {hasPerm("finance:manage") && (
+                            <div className="flex justify-end">
+                              <button
+                                onClick={() => {
+                                  setSelectedTxn(t);
+                                  setPayForm({ paymentStatus: t.paymentStatus, paymentReference: t.paymentReference || "", notes: "" });
+                                  setModal("payment");
+                                }}
+                                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-[#0B5CA8] hover:text-white font-medium"
+                              >
+                                <CreditCard className="w-3 h-3" /> Update Payment
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full text-xs text-left">
+                      <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-500 border-b">
+                        <tr>
+                          <th className="p-3">Txn ID & Date</th>
+                          <th className="p-3">Vehicle & Customer</th>
+                          <th className="p-3 text-right">Purchase Amount</th>
+                          <th className="p-3 text-right">Ops Expenses</th>
+                          <th className="p-3 text-right">Realized Value</th>
+                          <th className="p-3">Payment</th>
+                          <th className="p-3">Status</th>
+                          <th className="p-3">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                        {data.transactions.map((t: any) => {
+                          const opsExp = t.pickupExpense + t.transportationExpense + t.labourExpense + t.processingExpense + t.otherExpenses;
+                          return (
+                            <tr key={t.id}>
+                              <td className="p-3">
+                                <div className="font-semibold text-[#0B5CA8]">{t.transactionCode}</div>
+                                <div className="text-[11px] text-slate-400">{formatDate(t.transactionDate)}</div>
+                              </td>
+                              <td className="p-3">
+                                <div className="font-semibold">{t.vehicle.registrationNumber} ({t.vehicle.model})</div>
+                                <div className="text-[11px] text-slate-400">{t.customer.name} · {t.customer.city}</div>
+                              </td>
+                              <td className="p-3 text-right font-semibold tabular-nums">{formatINR(t.vehiclePurchaseAmount)}</td>
+                              <td className="p-3 text-right text-amber-600 tabular-nums">{formatINR(opsExp)}</td>
+                              <td className="p-3 text-right font-bold text-emerald-600 tabular-nums">{formatINR(t.realizationValue)}</td>
+                              <td className="p-3">
+                                <StatusBadge value={t.paymentStatus} />
+                                <div className="text-[10px] text-slate-400 mt-0.5">{t.paymentReference || t.paymentMethod}</div>
+                              </td>
+                              <td className="p-3"><StatusBadge value={t.transactionStatus} /></td>
+                              <td className="p-3">
+                                {hasPerm("finance:manage") && (
+                                  <button
+                                    onClick={() => {
+                                      setSelectedTxn(t);
+                                      setPayForm({ paymentStatus: t.paymentStatus, paymentReference: t.paymentReference || "", notes: "" });
+                                      setModal("payment");
+                                    }}
+                                    className="inline-flex items-center gap-1 px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 hover:bg-[#0B5CA8] hover:text-white"
+                                  >
+                                    <CreditCard className="w-3 h-3" /> Update
+                                  </button>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
               )}
             </Card>
           )}
 
           {tab === "expenses" && (
             <Card className="overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs text-left">
-                  <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-500 border-b">
-                    <tr>
-                      <th className="p-3">Expense ID</th>
-                      <th className="p-3">Category</th>
-                      <th className="p-3">Related Vehicle / Txn</th>
-                      <th className="p-3">Date & Method</th>
-                      <th className="p-3 text-right">Amount</th>
-                      <th className="p-3">Notes</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              {data.expenses.length === 0 ? <EmptyState title="No expenses recorded yet" description="Use '+ Record Expense' to log pickup, labour, processing, or general costs." /> : (
+                <>
+                  <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
                     {data.expenses.map((e: any) => (
-                      <tr key={e.id}>
-                        <td className="p-3 font-semibold">{e.expenseCode}</td>
-                        <td className="p-3"><StatusBadge value={e.category} /></td>
-                        <td className="p-3">{e.vehicle ? `${e.vehicle.registrationNumber} (${e.transaction?.transactionCode || ""})` : "General Operations"}</td>
-                        <td className="p-3">{formatDate(e.date)} · {e.paymentMethod}</td>
-                        <td className="p-3 text-right font-bold text-[#D62828] tabular-nums">{formatINR(e.amount)}</td>
-                        <td className="p-3 text-slate-500">{e.notes}</td>
-                      </tr>
+                      <div key={e.id} className="p-3.5 space-y-1.5 text-xs">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="font-bold">{e.expenseCode}</div>
+                            <div className="text-[11px] text-slate-500">{e.vehicle ? `${e.vehicle.registrationNumber} (${e.transaction?.transactionCode || ""})` : "General Operations"}</div>
+                          </div>
+                          <div className="text-right font-bold text-[#D62828] tabular-nums">{formatINR(e.amount)}</div>
+                        </div>
+                        <div className="flex items-center justify-between gap-2">
+                          <StatusBadge value={e.category} />
+                          <span className="text-[11px] text-slate-400">{formatDate(e.date)} · {e.paymentMethod}</span>
+                        </div>
+                        {e.notes && <p className="text-[11px] text-slate-500">{e.notes}</p>}
+                      </div>
                     ))}
-                  </tbody>
-                </table>
-              </div>
+                  </div>
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full text-xs text-left">
+                      <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-500 border-b">
+                        <tr>
+                          <th className="p-3">Expense ID</th>
+                          <th className="p-3">Category</th>
+                          <th className="p-3">Related Vehicle / Txn</th>
+                          <th className="p-3">Date & Method</th>
+                          <th className="p-3 text-right">Amount</th>
+                          <th className="p-3">Notes</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                        {data.expenses.map((e: any) => (
+                          <tr key={e.id}>
+                            <td className="p-3 font-semibold">{e.expenseCode}</td>
+                            <td className="p-3"><StatusBadge value={e.category} /></td>
+                            <td className="p-3">{e.vehicle ? `${e.vehicle.registrationNumber} (${e.transaction?.transactionCode || ""})` : "General Operations"}</td>
+                            <td className="p-3">{formatDate(e.date)} · {e.paymentMethod}</td>
+                            <td className="p-3 text-right font-bold text-[#D62828] tabular-nums">{formatINR(e.amount)}</td>
+                            <td className="p-3 text-slate-500">{e.notes}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
             </Card>
           )}
 
           {tab === "revenues" && (
             <Card className="overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs text-left">
-                  <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-500 border-b">
-                    <tr>
-                      <th className="p-3">Revenue ID</th>
-                      <th className="p-3">Source</th>
-                      <th className="p-3">Vehicle & Buyer</th>
-                      <th className="p-3">Date</th>
-                      <th className="p-3 text-right">Realized Amount</th>
-                      <th className="p-3">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              {data.revenues.length === 0 ? <EmptyState title="No realized revenue entries yet" description="Record scrap material, parts, or vehicle resale realization using '+ Record Revenue'." /> : (
+                <>
+                  <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
                     {data.revenues.map((r: any) => (
-                      <tr key={r.id}>
-                        <td className="p-3 font-semibold">{r.revenueCode}</td>
-                        <td className="p-3"><StatusBadge value={r.source} /></td>
-                        <td className="p-3">
-                          <div className="font-semibold">{r.vehicle?.registrationNumber || "—"}</div>
-                          <div className="text-[11px] text-slate-400">{r.buyer || "—"}</div>
-                        </td>
-                        <td className="p-3">{formatDate(r.date)}</td>
-                        <td className="p-3 text-right font-bold text-emerald-600 tabular-nums">{formatINR(r.amount)}</td>
-                        <td className="p-3"><StatusBadge value={r.paymentStatus} /></td>
-                      </tr>
+                      <div key={r.id} className="p-3.5 space-y-1.5 text-xs">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="font-bold">{r.revenueCode}</div>
+                            <div className="text-[11px] text-slate-500">{r.vehicle?.registrationNumber || "—"} · {r.buyer || "—"}</div>
+                          </div>
+                          <div className="font-bold text-emerald-600 tabular-nums">{formatINR(r.amount)}</div>
+                        </div>
+                        <div className="flex items-center justify-between gap-2">
+                          <StatusBadge value={r.source} />
+                          <StatusBadge value={r.paymentStatus} />
+                        </div>
+                        <div className="text-[11px] text-slate-400">{formatDate(r.date)}</div>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
-              </div>
+                  </div>
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full text-xs text-left">
+                      <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-500 border-b">
+                        <tr>
+                          <th className="p-3">Revenue ID</th>
+                          <th className="p-3">Source</th>
+                          <th className="p-3">Vehicle & Buyer</th>
+                          <th className="p-3">Date</th>
+                          <th className="p-3 text-right">Realized Amount</th>
+                          <th className="p-3">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                        {data.revenues.map((r: any) => (
+                          <tr key={r.id}>
+                            <td className="p-3 font-semibold">{r.revenueCode}</td>
+                            <td className="p-3"><StatusBadge value={r.source} /></td>
+                            <td className="p-3">
+                              <div className="font-semibold">{r.vehicle?.registrationNumber || "—"}</div>
+                              <div className="text-[11px] text-slate-400">{r.buyer || "—"}</div>
+                            </td>
+                            <td className="p-3">{formatDate(r.date)}</td>
+                            <td className="p-3 text-right font-bold text-emerald-600 tabular-nums">{formatINR(r.amount)}</td>
+                            <td className="p-3"><StatusBadge value={r.paymentStatus} /></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
             </Card>
           )}
 
           {tab === "payments" && (
             <Card className="overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs text-left">
-                  <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-500 border-b">
-                    <tr>
-                      <th className="p-3">Payment ID</th>
-                      <th className="p-3">Transaction / Vehicle</th>
-                      <th className="p-3">Method & Reference</th>
-                      <th className="p-3">Date</th>
-                      <th className="p-3 text-right">Amount</th>
-                      <th className="p-3">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              {data.payments.length === 0 ? <EmptyState title="No payment updates logged yet" description="Payment history entries appear as purchase payment statuses are updated." /> : (
+                <>
+                  <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
                     {data.payments.map((p: any) => (
-                      <tr key={p.id}>
-                        <td className="p-3 font-semibold">{p.paymentCode}</td>
-                        <td className="p-3">{p.transaction?.transactionCode || "—"} · {p.vehicle?.registrationNumber || "—"}</td>
-                        <td className="p-3">{p.paymentMethod} · {p.paymentReference || "—"}</td>
-                        <td className="p-3">{formatDate(p.paymentDate)}</td>
-                        <td className="p-3 text-right font-bold tabular-nums">{formatINR(p.amount)}</td>
-                        <td className="p-3"><StatusBadge value={p.status} /></td>
-                      </tr>
+                      <div key={p.id} className="p-3.5 space-y-1.5 text-xs">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="font-bold">{p.paymentCode}</div>
+                            <div className="text-[11px] text-slate-500">{p.transaction?.transactionCode || "—"} · {p.vehicle?.registrationNumber || "—"}</div>
+                          </div>
+                          <div className="font-bold tabular-nums">{formatINR(p.amount)}</div>
+                        </div>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[11px] text-slate-400">{p.paymentMethod} · {formatDate(p.paymentDate)}</span>
+                          <StatusBadge value={p.status} />
+                        </div>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
-              </div>
+                  </div>
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full text-xs text-left">
+                      <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-500 border-b">
+                        <tr>
+                          <th className="p-3">Payment ID</th>
+                          <th className="p-3">Transaction / Vehicle</th>
+                          <th className="p-3">Method & Reference</th>
+                          <th className="p-3">Date</th>
+                          <th className="p-3 text-right">Amount</th>
+                          <th className="p-3">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                        {data.payments.map((p: any) => (
+                          <tr key={p.id}>
+                            <td className="p-3 font-semibold">{p.paymentCode}</td>
+                            <td className="p-3">{p.transaction?.transactionCode || "—"} · {p.vehicle?.registrationNumber || "—"}</td>
+                            <td className="p-3">{p.paymentMethod} · {p.paymentReference || "—"}</td>
+                            <td className="p-3">{formatDate(p.paymentDate)}</td>
+                            <td className="p-3 text-right font-bold tabular-nums">{formatINR(p.amount)}</td>
+                            <td className="p-3"><StatusBadge value={p.status} /></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
             </Card>
           )}
         </div>

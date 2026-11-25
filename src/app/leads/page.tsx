@@ -195,6 +195,9 @@ function LeadsContent() {
     if (res.ok) {
       setLostModalTarget(null);
       await loadLeads();
+    } else {
+      const j = await res.json().catch(() => ({}));
+      alert(j.error || "Unable to update lead stage");
     }
   };
 
@@ -212,6 +215,9 @@ function LeadsContent() {
     if (res.ok) {
       setAssignModalLead(null);
       await loadLeads();
+    } else {
+      const j = await res.json().catch(() => ({}));
+      alert(j.error || "Unable to assign employee");
     }
   };
 
@@ -233,6 +239,9 @@ function LeadsContent() {
     if (res.ok) {
       setEditLead(null);
       await loadLeads();
+    } else {
+      const j = await res.json().catch(() => ({}));
+      alert(j.error || "Unable to update lead");
     }
   };
 
@@ -240,6 +249,10 @@ function LeadsContent() {
     if (!confirm(`Confirm soft-delete for lead ${lead.leadCode} (${lead.customerName})?`)) return;
     const res = await fetch(`/api/leads/${lead.id}`, { method: "DELETE" });
     if (res.ok) await loadLeads();
+    else {
+      const j = await res.json().catch(() => ({}));
+      alert(j.error || "Unable to delete lead");
+    }
   };
 
   const handleMergeSubmit = async (e: React.FormEvent) => {
@@ -254,6 +267,9 @@ function LeadsContent() {
       setMergeModalLead(null);
       setMergePrimaryId("");
       await loadLeads();
+    } else {
+      const j = await res.json().catch(() => ({}));
+      alert(j.error || "Unable to merge leads");
     }
   };
 
@@ -319,14 +335,14 @@ function LeadsContent() {
       />
 
       {/* Submodule Switcher */}
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-        <div className="flex flex-wrap gap-1.5 bg-white dark:bg-[#111a2e] p-1 rounded-xl border border-slate-200 dark:border-slate-800 text-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-4">
+        <div className="flex overflow-x-auto no-scrollbar sm:flex-wrap gap-1.5 bg-white dark:bg-[#111a2e] p-1 rounded-xl border border-slate-200 dark:border-slate-800 text-xs w-full sm:w-fit max-w-full">
           {[
             { key: "all", label: `All Leads (${data?.summary?.total ?? "—"})`, icon: <List className="w-3.5 h-3.5" /> },
             { key: "pipeline", label: "Pipeline Kanban", icon: <Kanban className="w-3.5 h-3.5" /> },
             { key: "lost", label: `Lost Leads (${data?.summary?.lostCount ?? 0})`, icon: <AlertTriangle className="w-3.5 h-3.5" /> },
             { key: "duplicates", label: `Duplicates (${data?.summary?.duplicateCount ?? 0})`, icon: <GitMerge className="w-3.5 h-3.5" /> },
-            { key: "recovery", label: `Missed Lead Recovery (${data?.summary?.recoveryCount ?? 0})`, icon: <ShieldAlert className="w-3.5 h-3.5" /> },
+            { key: "recovery", label: `Missed Recovery (${data?.summary?.recoveryCount ?? 0})`, icon: <ShieldAlert className="w-3.5 h-3.5" /> },
           ].map((t) => (
             <button
               key={t.key}
@@ -334,7 +350,7 @@ function LeadsContent() {
                 setView(t.key as any);
                 setPage(1);
               }}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold transition-colors ${
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold transition-colors shrink-0 ${
                 view === t.key
                   ? "bg-[#0B5CA8] text-white"
                   : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
@@ -345,15 +361,15 @@ function LeadsContent() {
           ))}
         </div>
 
-        <button onClick={loadLeads} className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-[#0B5CA8]">
+        <button onClick={loadLeads} className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-[#0B5CA8] self-end sm:self-auto shrink-0">
           <RefreshCw className="w-3.5 h-3.5" /> Refresh
         </button>
       </div>
 
       {/* Filters */}
-      <Card className="p-3.5 mb-5">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2.5 text-xs">
-          <div className="relative col-span-2 lg:col-span-2">
+      <Card className="p-3 sm:p-3.5 mb-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-2.5 text-xs">
+          <div className="relative sm:col-span-2 lg:col-span-2">
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
             <input
               value={search}
@@ -362,28 +378,28 @@ function LeadsContent() {
                 setPage(1);
               }}
               placeholder="Search name, mobile, lead ID, GJ reg, model..."
-              className="w-full pl-8 pr-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900"
+              className="w-full pl-8 pr-2.5 py-2 sm:py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900"
             />
           </div>
-          <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }} className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+          <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }} className="px-2.5 py-2 sm:py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
             <option value="All">Stage: All</option>
             {LEAD_STAGES.map((s) => (
               <option key={s.key} value={s.key}>{s.key}</option>
             ))}
           </select>
-          <select value={priorityFilter} onChange={(e) => { setPriorityFilter(e.target.value); setPage(1); }} className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+          <select value={priorityFilter} onChange={(e) => { setPriorityFilter(e.target.value); setPage(1); }} className="px-2.5 py-2 sm:py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
             <option value="All">Priority: All</option>
             {LEAD_PRIORITIES.map((p) => (
               <option key={p} value={p}>{p}</option>
             ))}
           </select>
-          <select value={districtFilter} onChange={(e) => { setDistrictFilter(e.target.value); setPage(1); }} className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+          <select value={districtFilter} onChange={(e) => { setDistrictFilter(e.target.value); setPage(1); }} className="px-2.5 py-2 sm:py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
             <option value="All">District: All Gujarat</option>
             {GUJARAT_DISTRICTS.map((d) => (
               <option key={d.district} value={d.district}>{d.district}</option>
             ))}
           </select>
-          <select value={employeeFilter} onChange={(e) => { setEmployeeFilter(e.target.value); setPage(1); }} className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+          <select value={employeeFilter} onChange={(e) => { setEmployeeFilter(e.target.value); setPage(1); }} className="px-2.5 py-2 sm:py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
             <option value="All">Assignee: All</option>
             <option value="unassigned">Unassigned Only</option>
             {(data?.options?.employees || []).map((emp: any) => (
@@ -400,7 +416,7 @@ function LeadsContent() {
               setEmployeeFilter("All");
               setPage(1);
             }}
-            className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium"
+            className="px-3 py-2 sm:py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium"
           >
             Reset Filters
           </button>
@@ -446,7 +462,7 @@ function LeadsContent() {
                         updateLeadStatus(dragged, stage.key);
                       }
                     }}
-                    className="w-72 shrink-0 bg-slate-100/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl flex flex-col max-h-[72vh]"
+                    className="w-[82vw] max-w-[290px] sm:w-72 shrink-0 bg-slate-100/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl flex flex-col max-h-[72vh]"
                   >
                     <div className="p-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
                       <div className="flex items-center gap-2 min-w-0">
@@ -518,7 +534,100 @@ function LeadsContent() {
                 <EmptyState />
               ) : (
                 <>
-                  <div className="overflow-x-auto">
+                  {/* Mobile Cards */}
+                  <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+                    {data.leads.map((l: any) => (
+                      <div key={l.id} className="p-3.5 space-y-2.5 text-xs">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <Link href={`/leads/${l.id}`} className="font-bold text-[#0B5CA8] hover:underline">
+                                {l.leadCode}
+                              </Link>
+                              {l.isDuplicate && (
+                                <span className="text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded font-medium">
+                                  Duplicate Flag
+                                </span>
+                              )}
+                            </div>
+                            <div className="font-semibold text-sm text-slate-900 dark:text-white mt-0.5">{l.customerName}</div>
+                            <div className="text-[11px] text-slate-500">{l.mobile} · {l.city}, {l.district}</div>
+                          </div>
+                          <div className="flex flex-col items-end gap-1 shrink-0">
+                            <StatusBadge value={l.status} />
+                            <StatusBadge value={l.priority} />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 text-[11px]">
+                          <div>
+                            <span className="text-slate-400 block">Vehicle</span>
+                            <span className="font-medium">{l.vehicle} {l.manufacturingYear ? `(${l.manufacturingYear})` : ""}</span>
+                            <div className="text-slate-500">{l.registrationNumber}</div>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 block">Attribution & Intent</span>
+                            <span className="font-medium">{l.leadSource}</span>
+                            <div className="text-slate-500">{l.intentScore}/100 ({l.intentCategory})</div>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 block">Assignee</span>
+                            <span className="font-medium">{l.assignedEmployeeName}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 block">Next Follow-up</span>
+                            <span className="font-medium">{l.nextFollowUp ? formatDate(l.nextFollowUp) : "None"}</span>
+                          </div>
+                        </div>
+
+                        {l.lostReason && <div className="text-[11px] text-red-500">Lost Reason: {l.lostReason}</div>}
+                        {view === "recovery" && l.recoveryReasons?.length > 0 && (
+                          <div className="text-[11px] text-amber-600 font-medium">{l.recoveryReasons[0]}</div>
+                        )}
+
+                        <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                          <Link href={`/leads/${l.id}`} className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#0B5CA8] text-white font-semibold">
+                            <Eye className="w-3.5 h-3.5" /> Open
+                          </Link>
+                          {hasPerm("leads:edit") && (
+                            <button onClick={() => setEditLead({ ...l })} className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
+                              <Edit3 className="w-3.5 h-3.5" /> Edit
+                            </button>
+                          )}
+                          {hasPerm("leads:assign") && (
+                            <button
+                              onClick={() => {
+                                setAssignModalLead(l);
+                                setAssignEmpId(l.assignedEmployeeId || "");
+                              }}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700"
+                            >
+                              <UserPlus className="w-3.5 h-3.5" /> Assign
+                            </button>
+                          )}
+                          {view === "duplicates" && hasPerm("leads:merge") && (
+                            <button
+                              onClick={() => {
+                                setMergeModalLead(l);
+                                setMergePrimaryId("");
+                              }}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-50 text-amber-700 border border-amber-200"
+                            >
+                              <GitMerge className="w-3.5 h-3.5" /> Merge
+                            </button>
+                          )}
+                          {hasPerm("leads:delete") && (
+                            <button onClick={() => handleDeleteLead(l)} className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-red-600 border border-red-200">
+                              <Trash2 className="w-3.5 h-3.5" /> Delete
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Desktop Table */}
+                  <div className="hidden md:block overflow-x-auto">
                     <table className="w-full text-xs text-left">
                       <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-500 border-b border-slate-200 dark:border-slate-800">
                         <tr>
@@ -633,7 +742,7 @@ function LeadsContent() {
                       </tbody>
                     </table>
                   </div>
-                  <Pagination page={page} pageSize={20} total={data.totalCount} onPageChange={setPage} />
+                  <Pagination page={page} pageSize={data.pageSize || 20} total={data.totalCount} onPageChange={setPage} />
                 </>
               )}
             </Card>
@@ -823,18 +932,18 @@ function LeadsContent() {
             </div>
             <div className="space-y-2">
               {duplicateWarning.duplicates.map((d: any) => (
-                <div key={d.id} className="p-3 rounded-lg border border-slate-200 flex items-center justify-between">
+                <div key={d.id} className="p-3 rounded-lg border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
                     <div className="font-bold">{d.leadCode} — {d.customerName}</div>
                     <div className="text-slate-500">{d.mobile} · {d.city} · {d.vehicle}</div>
                   </div>
-                  <Link href={`/leads/${d.id}`} className="text-[#0B5CA8] font-semibold hover:underline">
+                  <Link href={`/leads/${d.id}`} className="text-[#0B5CA8] font-semibold hover:underline shrink-0">
                     Open Existing →
                   </Link>
                 </div>
               ))}
             </div>
-            <div className="flex justify-end gap-2 pt-3 border-t">
+            <div className="flex flex-wrap justify-end gap-2 pt-3 border-t">
               <button onClick={() => setDuplicateWarning(null)} className="px-4 py-2 rounded-lg border">
                 Cancel Creation
               </button>
@@ -911,7 +1020,7 @@ function LeadsContent() {
         {editLead && (
           <form onSubmit={handleEditSubmit} className="space-y-3 text-xs">
             <input value={editLead.customerName} onChange={(e) => setEditLead({ ...editLead, customerName: e.target.value })} placeholder="Customer Name" className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent" />
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <input value={editLead.city} onChange={(e) => setEditLead({ ...editLead, city: e.target.value })} placeholder="City" className="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent" />
               <select value={editLead.priority} onChange={(e) => setEditLead({ ...editLead, priority: e.target.value })} className="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900">
                 {LEAD_PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}

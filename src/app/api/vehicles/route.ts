@@ -147,12 +147,18 @@ export async function POST(req: Request) {
       if (!canPerform(session, "vehicles:manage")) {
         return NextResponse.json({ error: "Forbidden: Operations permission required" }, { status: 403 });
       }
+      const inspectorId =
+        String(body.inspectorId || session.employeeId || "") ||
+        (await prisma.employee.findFirst({ where: { accountStatus: "Active" }, select: { id: true } }))?.id;
+      if (!inspectorId) {
+        return NextResponse.json({ error: "No active employee found for inspection." }, { status: 400 });
+      }
       const count = await prisma.inspection.count();
       const inspection = await prisma.inspection.create({
         data: {
           inspectionCode: `INSP-${String(count + 1).padStart(4, "0")}`,
           vehicleId: String(body.vehicleId),
-          inspectorId: String(body.inspectorId || session.employeeId),
+          inspectorId,
           vehicleCondition: String(body.vehicleCondition || "Fair"),
           engineCondition: String(body.engineCondition || "Average"),
           bodyCondition: String(body.bodyCondition || "Minor Rust"),

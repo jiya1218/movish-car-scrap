@@ -67,6 +67,9 @@ function FollowUpsContent() {
     if (res.ok) {
       setCreateOpen(false);
       await loadFollowUps();
+    } else {
+      const j = await res.json().catch(() => ({}));
+      alert(j.error || "Unable to schedule follow-up");
     }
   };
 
@@ -81,6 +84,9 @@ function FollowUpsContent() {
     if (res.ok) {
       setCompleteTarget(null);
       await loadFollowUps();
+    } else {
+      const j = await res.json().catch(() => ({}));
+      alert(j.error || "Unable to complete follow-up");
     }
   };
 
@@ -110,7 +116,7 @@ function FollowUpsContent() {
         </div>
       )}
 
-      <div className="flex flex-wrap gap-1.5 bg-white dark:bg-[#111a2e] p-1 rounded-xl border border-slate-200 dark:border-slate-800 w-fit text-xs mb-4">
+      <div className="flex overflow-x-auto no-scrollbar sm:flex-wrap gap-1.5 bg-white dark:bg-[#111a2e] p-1 rounded-xl border border-slate-200 dark:border-slate-800 w-full sm:w-fit max-w-full text-xs mb-4">
         {[
           { key: "today", label: `Today's Tasks (${data?.metrics?.today ?? 0})` },
           { key: "upcoming", label: `Upcoming (${data?.metrics?.upcoming ?? 0})` },
@@ -123,7 +129,7 @@ function FollowUpsContent() {
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            className={`px-3 py-1.5 rounded-lg font-semibold ${tab === t.key ? "bg-[#0B5CA8] text-white" : "text-slate-600 dark:text-slate-300"}`}
+            className={`px-3 py-1.5 rounded-lg font-semibold shrink-0 ${tab === t.key ? "bg-[#0B5CA8] text-white" : "text-slate-600 dark:text-slate-300"}`}
           >
             {t.label}
           </button>
@@ -158,40 +164,70 @@ function FollowUpsContent() {
           {data.leadsWithoutFollowup.length === 0 ? (
             <EmptyState title="Every active lead has a follow-up scheduled" />
           ) : (
-            <table className="w-full text-xs text-left">
-              <thead className="bg-slate-50 dark:bg-slate-900/80 border-b">
-                <tr>
-                  <th className="p-3">Lead ID</th>
-                  <th className="p-3">Customer</th>
-                  <th className="p-3">City</th>
-                  <th className="p-3">Stage</th>
-                  <th className="p-3">Assignee</th>
-                  <th className="p-3">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
+            <>
+              <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
                 {data.leadsWithoutFollowup.map((l: any) => (
-                  <tr key={l.id}>
-                    <td className="p-3"><Link href={`/leads/${l.id}`} className="font-semibold text-[#0B5CA8] hover:underline">{l.leadCode}</Link></td>
-                    <td className="p-3">{l.customer.name} ({l.customer.primaryMobile})</td>
-                    <td className="p-3">{l.customer.city}</td>
-                    <td className="p-3"><StatusBadge value={l.status} /></td>
-                    <td className="p-3">{l.assignedEmployee?.fullName || "Unassigned"}</td>
-                    <td className="p-3">
+                  <div key={l.id} className="p-3.5 space-y-2 text-xs">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <Link href={`/leads/${l.id}`} className="font-bold text-[#0B5CA8] hover:underline">{l.leadCode}</Link>
+                        <div className="font-semibold text-slate-900 dark:text-white">{l.customer.name}</div>
+                        <div className="text-[11px] text-slate-500">{l.customer.primaryMobile} · {l.customer.city}</div>
+                      </div>
+                      <StatusBadge value={l.status} className="shrink-0" />
+                    </div>
+                    <div className="flex items-center justify-between gap-2 pt-1">
+                      <span className="text-[11px] text-slate-500">Assignee: {l.assignedEmployee?.fullName || "Unassigned"}</span>
                       <button
                         onClick={() => {
                           setCreateForm({ ...createForm, leadId: l.id, assignedEmployeeId: l.assignedEmployee?.id || "" });
                           setCreateOpen(true);
                         }}
-                        className="px-2.5 py-1 rounded bg-[#0B5CA8] text-white font-medium"
+                        className="px-3 py-1.5 rounded-lg bg-[#0B5CA8] text-white font-semibold"
                       >
                         Schedule
                       </button>
-                    </td>
-                  </tr>
+                    </div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-slate-50 dark:bg-slate-900/80 border-b">
+                    <tr>
+                      <th className="p-3">Lead ID</th>
+                      <th className="p-3">Customer</th>
+                      <th className="p-3">City</th>
+                      <th className="p-3">Stage</th>
+                      <th className="p-3">Assignee</th>
+                      <th className="p-3">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {data.leadsWithoutFollowup.map((l: any) => (
+                      <tr key={l.id}>
+                        <td className="p-3"><Link href={`/leads/${l.id}`} className="font-semibold text-[#0B5CA8] hover:underline">{l.leadCode}</Link></td>
+                        <td className="p-3">{l.customer.name} ({l.customer.primaryMobile})</td>
+                        <td className="p-3">{l.customer.city}</td>
+                        <td className="p-3"><StatusBadge value={l.status} /></td>
+                        <td className="p-3">{l.assignedEmployee?.fullName || "Unassigned"}</td>
+                        <td className="p-3">
+                          <button
+                            onClick={() => {
+                              setCreateForm({ ...createForm, leadId: l.id, assignedEmployeeId: l.assignedEmployee?.id || "" });
+                              setCreateOpen(true);
+                            }}
+                            className="px-2.5 py-1 rounded bg-[#0B5CA8] text-white font-medium"
+                          >
+                            Schedule
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </Card>
       )}
@@ -201,8 +237,54 @@ function FollowUpsContent() {
           {data.followUps.length === 0 ? (
             <EmptyState />
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs text-left">
+            <>
+              <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+                {data.followUps.map((f: any) => (
+                  <div key={f.id} className="p-3.5 space-y-2 text-xs">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="font-bold text-slate-900 dark:text-white">{f.followUpCode} · {f.type}</div>
+                        <Link href={`/leads/${f.lead.id}`} className="font-semibold text-[#0B5CA8] hover:underline block truncate">
+                          {f.lead.leadCode} — {f.customer.name}
+                        </Link>
+                        <div className="text-[11px] text-slate-500">{f.customer.primaryMobile} · {f.customer.city}</div>
+                      </div>
+                      <div className="flex flex-col items-end gap-1 shrink-0">
+                        <StatusBadge value={f.status} />
+                        <StatusBadge value={f.priority} />
+                      </div>
+                    </div>
+                    {f.notes && <p className="text-[11px] text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/60 p-2 rounded-lg">{f.notes}</p>}
+                    <div className="flex items-center justify-between gap-2 pt-1 text-[11px]">
+                      <div className="text-slate-500">
+                        {formatDate(f.followUpDate)} {f.followUpTime} · {f.assignedEmployee.fullName}
+                      </div>
+                      {f.status !== "Completed" ? (
+                        <button
+                          onClick={() => {
+                            setCompleteTarget(f);
+                            setCompleteForm({
+                              contactResult: "Connected — Interested",
+                              customerResponse: "",
+                              updatedLeadStatus: f.lead.status,
+                              notes: "",
+                              nextFollowUpDate: "",
+                              nextAction: "",
+                            });
+                          }}
+                          className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-semibold shrink-0"
+                        >
+                          Complete
+                        </button>
+                      ) : (
+                        <span className="text-emerald-600 font-medium">{f.contactResult}</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-xs text-left">
                 <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-500 border-b border-slate-200 dark:border-slate-800">
                   <tr>
                     <th className="p-3">Follow-up ID</th>
@@ -266,6 +348,7 @@ function FollowUpsContent() {
                 </tbody>
               </table>
             </div>
+            </>
           )}
         </Card>
       )}
@@ -288,7 +371,7 @@ function FollowUpsContent() {
             <option value="">Default Lead Assignee</option>
             {(data?.employees || []).map((e: any) => <option key={e.id} value={e.id}>{e.fullName}</option>)}
           </select>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <input type="date" required value={createForm.followUpDate} onChange={(e) => setCreateForm({ ...createForm, followUpDate: e.target.value })} className="px-3 py-2 rounded-lg border bg-transparent" />
             <input type="time" required value={createForm.followUpTime} onChange={(e) => setCreateForm({ ...createForm, followUpTime: e.target.value })} className="px-3 py-2 rounded-lg border bg-transparent" />
           </div>
@@ -319,7 +402,7 @@ function FollowUpsContent() {
               <option key={s.key} value={s.key}>Lead Stage: {s.key}</option>
             ))}
           </select>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div>
               <label className="block text-[11px] text-slate-500 mb-1">Next Follow-up Date (Optional)</label>
               <input type="date" value={completeForm.nextFollowUpDate} onChange={(e) => setCompleteForm({ ...completeForm, nextFollowUpDate: e.target.value })} className="w-full px-3 py-2 rounded-lg border bg-transparent" />

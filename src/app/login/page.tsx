@@ -39,29 +39,29 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50/40 to-slate-200 dark:from-slate-950 dark:via-[#0e192f] dark:to-slate-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50/40 to-slate-200 dark:from-slate-950 dark:via-[#0e192f] dark:to-slate-900 flex items-center justify-center p-3 sm:p-4">
       <div className="w-full max-w-4xl grid grid-cols-1 lg:grid-cols-12 bg-white dark:bg-[#111a2e] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
         {/* Brand Panel */}
-        <div className="lg:col-span-5 bg-[#1B3156] text-white p-8 flex flex-col justify-between relative overflow-hidden">
+        <div className="lg:col-span-5 bg-[#1B3156] text-white p-5 sm:p-8 flex flex-col justify-between relative overflow-hidden">
           <div className="absolute -right-12 -top-12 w-48 h-48 rounded-full bg-[#0B5CA8]/30 blur-2xl" />
           <div className="absolute -left-12 -bottom-12 w-44 h-44 rounded-full bg-[#D62828]/20 blur-2xl" />
 
           <div className="relative z-10">
-            <div className="inline-flex bg-white rounded-xl px-4 py-2.5 shadow-md mb-6">
-              <img src="/logo.png" alt="Movish Group" className="h-12 w-auto object-contain" />
+            <div className="inline-flex bg-white rounded-xl px-3.5 py-2 sm:px-4 sm:py-2.5 shadow-md mb-4 sm:mb-6">
+              <img src="/logo.png" alt="Movish Group" className="h-9 sm:h-12 w-auto object-contain" />
             </div>
-            <h1 className="text-2xl font-bold tracking-tight">Movish Group BMS</h1>
-            <p className="text-blue-100/90 text-sm mt-2 leading-relaxed">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Movish Group BMS</h1>
+            <p className="text-blue-100/90 text-xs sm:text-sm mt-1.5 sm:mt-2 leading-relaxed">
               Centralized Meta Ads, Lead Management CRM, Vehicle Scrapping Operations & Financial Analytics across Gujarat.
             </p>
           </div>
 
-          <div className="relative z-10 mt-8 space-y-3 text-xs text-blue-100/85">
+          <div className="relative z-10 mt-4 sm:mt-8 space-y-2 sm:space-y-3 text-xs text-blue-100/85">
             <div className="flex items-center gap-2.5 bg-white/10 rounded-lg px-3 py-2">
               <ShieldCheck className="w-4 h-4 text-emerald-300 shrink-0" />
               <span>Authenticated workspace with role-based access control</span>
             </div>
-            <div className="flex items-center gap-2.5 bg-white/10 rounded-lg px-3 py-2">
+            <div className="hidden sm:flex items-center gap-2.5 bg-white/10 rounded-lg px-3 py-2">
               <span className="w-2 h-2 rounded-full bg-[#D62828] shrink-0" />
               <span>Gujarat District & City Coverage · Currency: INR (₹)</span>
             </div>
@@ -69,7 +69,7 @@ export default function LoginPage() {
         </div>
 
         {/* Sign-in Form */}
-        <div className="lg:col-span-7 p-8 flex flex-col justify-center">
+        <div className="lg:col-span-7 p-5 sm:p-8 flex flex-col justify-center">
           <div className="mb-6">
             <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Sign in to Movish Group</h2>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">

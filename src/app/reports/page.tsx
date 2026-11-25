@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Download } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
-import { Card, ErrorState, LoadingState, PageHeader, StatusBadge } from "@/components/ui";
+import { Card, EmptyState, ErrorState, LoadingState, PageHeader, StatusBadge } from "@/components/ui";
 import { exportToCSV, exportToExcel, exportToPDF } from "@/lib/export";
 import { formatDate, formatINR, formatNumber } from "@/lib/format";
 
@@ -160,7 +160,7 @@ export default function ReportsPage() {
 
       {!loading && data && (
         <div className="space-y-5">
-          <div className="flex flex-wrap gap-1.5 bg-white dark:bg-[#111a2e] p-1 rounded-xl border border-slate-200 dark:border-slate-800 w-fit text-xs">
+          <div className="flex overflow-x-auto no-scrollbar sm:flex-wrap gap-1.5 bg-white dark:bg-[#111a2e] p-1 rounded-xl border border-slate-200 dark:border-slate-800 w-full sm:w-fit max-w-full text-xs">
             {[
               ...(data.permissions.canViewAds ? [{ key: "marketing", label: "Marketing" }] : []),
               ...(data.permissions.canViewCrm ? [{ key: "crm", label: "CRM" }] : []),
@@ -168,7 +168,7 @@ export default function ReportsPage() {
               ...(data.permissions.canViewOperations ? [{ key: "operations", label: "Operations" }] : []),
               ...(data.permissions.canViewTeam ? [{ key: "team", label: "Team" }] : []),
             ].map((t) => (
-              <button key={t.key} onClick={() => setTab(t.key as any)} className={`px-3.5 py-1.5 rounded-lg font-semibold ${tab === t.key ? "bg-[#0B5CA8] text-white" : "text-slate-600 dark:text-slate-300"}`}>
+              <button key={t.key} onClick={() => setTab(t.key as any)} className={`px-3.5 py-1.5 rounded-lg font-semibold shrink-0 ${tab === t.key ? "bg-[#0B5CA8] text-white" : "text-slate-600 dark:text-slate-300"}`}>
                 {t.label}
               </button>
             ))}
@@ -176,36 +176,55 @@ export default function ReportsPage() {
 
           {tab === "marketing" && data.permissions.canViewAds && (
             <Card className="overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs text-left">
-                  <thead className="bg-slate-50 dark:bg-slate-900/80 border-b">
-                    <tr>
-                      <th className="p-3">Campaign</th>
-                      <th className="p-3">Platform</th>
-                      <th className="p-3 text-right">Spend</th>
-                      <th className="p-3 text-right">Impressions</th>
-                      <th className="p-3 text-right">Clicks / CTR</th>
-                      <th className="p-3 text-right">CPC / CPM</th>
-                      <th className="p-3 text-right">Leads / CPL</th>
-                      <th className="p-3 text-right">Qualified / Closed</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
+              {data.marketingReport.length === 0 ? <EmptyState title="No marketing campaign report data yet" /> : (
+                <>
+                  <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
                     {data.marketingReport.map((r: any) => (
-                      <tr key={r.campaignCode}>
-                        <td className="p-3 font-semibold">{r.campaignCode} — {r.name}</td>
-                        <td className="p-3">{r.platform}</td>
-                        <td className="p-3 text-right font-semibold">{formatINR(r.spend)}</td>
-                        <td className="p-3 text-right">{formatNumber(r.impressions)}</td>
-                        <td className="p-3 text-right">{formatNumber(r.clicks)} ({r.ctr}%)</td>
-                        <td className="p-3 text-right">{formatINR(r.cpc)} / {formatINR(r.cpm)}</td>
-                        <td className="p-3 text-right font-bold text-[#0B5CA8]">{r.leads} ({formatINR(r.cpl)})</td>
-                        <td className="p-3 text-right">{r.qualified} / {r.completed}</td>
-                      </tr>
+                      <div key={r.campaignCode} className="p-3.5 space-y-1.5 text-xs">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="font-semibold">{r.campaignCode} — {r.name}</div>
+                          <span className="text-[11px] text-slate-400 shrink-0">{r.platform}</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-900/60 text-[11px] tabular-nums">
+                          <div><span className="text-slate-400 block">Spend</span><strong>{formatINR(r.spend)}</strong></div>
+                          <div><span className="text-slate-400 block">CTR / CPC</span><strong>{r.ctr}% / {formatINR(r.cpc)}</strong></div>
+                          <div><span className="text-slate-400 block">Leads / CPL</span><strong className="text-[#0B5CA8]">{r.leads} ({formatINR(r.cpl)})</strong></div>
+                        </div>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
-              </div>
+                  </div>
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full text-xs text-left">
+                      <thead className="bg-slate-50 dark:bg-slate-900/80 border-b">
+                        <tr>
+                          <th className="p-3">Campaign</th>
+                          <th className="p-3">Platform</th>
+                          <th className="p-3 text-right">Spend</th>
+                          <th className="p-3 text-right">Impressions</th>
+                          <th className="p-3 text-right">Clicks / CTR</th>
+                          <th className="p-3 text-right">CPC / CPM</th>
+                          <th className="p-3 text-right">Leads / CPL</th>
+                          <th className="p-3 text-right">Qualified / Closed</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {data.marketingReport.map((r: any) => (
+                          <tr key={r.campaignCode}>
+                            <td className="p-3 font-semibold">{r.campaignCode} — {r.name}</td>
+                            <td className="p-3">{r.platform}</td>
+                            <td className="p-3 text-right font-semibold">{formatINR(r.spend)}</td>
+                            <td className="p-3 text-right">{formatNumber(r.impressions)}</td>
+                            <td className="p-3 text-right">{formatNumber(r.clicks)} ({r.ctr}%)</td>
+                            <td className="p-3 text-right">{formatINR(r.cpc)} / {formatINR(r.cpm)}</td>
+                            <td className="p-3 text-right font-bold text-[#0B5CA8]">{r.leads} ({formatINR(r.cpl)})</td>
+                            <td className="p-3 text-right">{r.qualified} / {r.completed}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
             </Card>
           )}
 
@@ -213,11 +232,11 @@ export default function ReportsPage() {
             <div className="space-y-4">
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs">
                 {[
-                  { label: "Total Leads", value: data.crmSummary.totalLeads },
-                  { label: "Contacted", value: data.crmSummary.contacted },
-                  { label: "Qualified", value: data.crmSummary.qualified },
-                  { label: "Lost", value: data.crmSummary.lost },
-                  { label: "Conversion Rate", value: `${data.crmSummary.conversionRate}%` },
+                  { label: "Total Leads", value: data.crmSummary?.totalLeads ?? 0 },
+                  { label: "Contacted", value: data.crmSummary?.contacted ?? 0 },
+                  { label: "Qualified", value: data.crmSummary?.qualified ?? 0 },
+                  { label: "Lost", value: data.crmSummary?.lost ?? 0 },
+                  { label: "Conversion Rate", value: `${data.crmSummary?.conversionRate ?? 0}%` },
                 ].map((m) => (
                   <Card key={m.label} className="p-3.5">
                     <div className="text-slate-400">{m.label}</div>
@@ -226,34 +245,55 @@ export default function ReportsPage() {
                 ))}
               </div>
               <Card className="overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs text-left">
-                    <thead className="bg-slate-50 dark:bg-slate-900/80 border-b">
-                      <tr>
-                        <th className="p-3">Lead ID</th>
-                        <th className="p-3">Customer</th>
-                        <th className="p-3">City</th>
-                        <th className="p-3">Source / Campaign</th>
-                        <th className="p-3">Stage</th>
-                        <th className="p-3">Assignee</th>
-                        <th className="p-3">Date</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y">
+                {data.crmLeads.length === 0 ? <EmptyState title="No CRM lead report records yet" /> : (
+                  <>
+                    <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
                       {data.crmLeads.slice(0, 50).map((l: any) => (
-                        <tr key={l.leadCode}>
-                          <td className="p-3 font-semibold">{l.leadCode}</td>
-                          <td className="p-3">{l.customerName}</td>
-                          <td className="p-3">{l.city}</td>
-                          <td className="p-3">{l.source} ({l.campaign})</td>
-                          <td className="p-3"><StatusBadge value={l.status} /></td>
-                          <td className="p-3">{l.assignee}</td>
-                          <td className="p-3">{formatDate(l.enquiryDate)}</td>
-                        </tr>
+                        <div key={l.leadCode} className="p-3.5 space-y-1.5 text-xs">
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <div className="font-bold text-[#0B5CA8]">{l.leadCode} · {l.customerName}</div>
+                              <div className="text-[11px] text-slate-500">{l.city} · {l.source} ({l.campaign})</div>
+                            </div>
+                            <StatusBadge value={l.status} className="shrink-0" />
+                          </div>
+                          <div className="flex justify-between text-[11px] text-slate-400">
+                            <span>Assignee: {l.assignee}</span>
+                            <span>{formatDate(l.enquiryDate)}</span>
+                          </div>
+                        </div>
                       ))}
-                    </tbody>
-                  </table>
-                </div>
+                    </div>
+                    <div className="hidden md:block overflow-x-auto">
+                      <table className="w-full text-xs text-left">
+                        <thead className="bg-slate-50 dark:bg-slate-900/80 border-b">
+                          <tr>
+                            <th className="p-3">Lead ID</th>
+                            <th className="p-3">Customer</th>
+                            <th className="p-3">City</th>
+                            <th className="p-3">Source / Campaign</th>
+                            <th className="p-3">Stage</th>
+                            <th className="p-3">Assignee</th>
+                            <th className="p-3">Date</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y">
+                          {data.crmLeads.slice(0, 50).map((l: any) => (
+                            <tr key={l.leadCode}>
+                              <td className="p-3 font-semibold">{l.leadCode}</td>
+                              <td className="p-3">{l.customerName}</td>
+                              <td className="p-3">{l.city}</td>
+                              <td className="p-3">{l.source} ({l.campaign})</td>
+                              <td className="p-3"><StatusBadge value={l.status} /></td>
+                              <td className="p-3">{l.assignee}</td>
+                              <td className="p-3">{formatDate(l.enquiryDate)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                )}
               </Card>
             </div>
           )}
@@ -261,109 +301,173 @@ export default function ReportsPage() {
           {tab === "finance" && data.permissions.canViewFinance && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                <Card className="p-3.5"><div className="text-slate-400">Purchase Cost</div><div className="text-lg font-bold">{formatINR(data.financeTotals.purchaseCost)}</div></Card>
-                <Card className="p-3.5"><div className="text-slate-400">Op. Expenses</div><div className="text-lg font-bold text-amber-600">{formatINR(data.financeTotals.operationalExpenses)}</div></Card>
-                <Card className="p-3.5"><div className="text-slate-400">Realization</div><div className="text-lg font-bold text-[#0B5CA8]">{formatINR(data.financeTotals.realization)}</div></Card>
-                <Card className="p-3.5"><div className="text-slate-400">Net Profit</div><div className="text-lg font-bold text-emerald-600">{formatINR(data.financeTotals.netProfit)}</div></Card>
+                <Card className="p-3.5"><div className="text-slate-400">Purchase Cost</div><div className="text-base sm:text-lg font-bold tabular-nums">{formatINR(data.financeTotals?.purchaseCost ?? 0)}</div></Card>
+                <Card className="p-3.5"><div className="text-slate-400">Op. Expenses</div><div className="text-base sm:text-lg font-bold text-amber-600 tabular-nums">{formatINR(data.financeTotals?.operationalExpenses ?? 0)}</div></Card>
+                <Card className="p-3.5"><div className="text-slate-400">Realization</div><div className="text-base sm:text-lg font-bold text-[#0B5CA8] tabular-nums">{formatINR(data.financeTotals?.realization ?? 0)}</div></Card>
+                <Card className="p-3.5"><div className="text-slate-400">Net Profit</div><div className="text-base sm:text-lg font-bold text-emerald-600 tabular-nums">{formatINR(data.financeTotals?.netProfit ?? 0)}</div></Card>
               </div>
               <Card className="overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs text-left">
-                    <thead className="bg-slate-50 dark:bg-slate-900/80 border-b">
-                      <tr>
-                        <th className="p-3">Txn ID</th>
-                        <th className="p-3">Vehicle & City</th>
-                        <th className="p-3 text-right">Purchase Cost</th>
-                        <th className="p-3 text-right">Expenses</th>
-                        <th className="p-3 text-right">Realization</th>
-                        <th className="p-3 text-right">Net Profit</th>
-                        <th className="p-3">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y">
+                {data.financeReport.length === 0 ? <EmptyState title="No financial transactions yet" /> : (
+                  <>
+                    <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
                       {data.financeReport.map((f: any) => (
-                        <tr key={f.transactionCode}>
-                          <td className="p-3 font-semibold">{f.transactionCode}</td>
-                          <td className="p-3">{f.vehicle} · {f.city}</td>
-                          <td className="p-3 text-right">{formatINR(f.purchaseCost)}</td>
-                          <td className="p-3 text-right">{formatINR(f.expenses)}</td>
-                          <td className="p-3 text-right">{formatINR(f.realization)}</td>
-                          <td className={`p-3 text-right font-bold ${f.netProfit >= 0 ? "text-emerald-600" : "text-red-500"}`}>{formatINR(f.netProfit)}</td>
-                          <td className="p-3"><StatusBadge value={f.status} /></td>
-                        </tr>
+                        <div key={f.transactionCode} className="p-3.5 space-y-1.5 text-xs">
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <div className="font-bold">{f.transactionCode}</div>
+                              <div className="text-[11px] text-slate-500">{f.vehicle} · {f.city}</div>
+                            </div>
+                            <StatusBadge value={f.status} />
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-900/60 text-[11px] tabular-nums">
+                            <div><span className="text-slate-400 block">Purchase / Exp</span><strong>{formatINR(f.purchaseCost)} / {formatINR(f.expenses)}</strong></div>
+                            <div><span className="text-slate-400 block">Realization / Profit</span><strong className={f.netProfit >= 0 ? "text-emerald-600" : "text-red-500"}>{formatINR(f.realization)} / {formatINR(f.netProfit)}</strong></div>
+                          </div>
+                        </div>
                       ))}
-                    </tbody>
-                  </table>
-                </div>
+                    </div>
+                    <div className="hidden md:block overflow-x-auto">
+                      <table className="w-full text-xs text-left">
+                        <thead className="bg-slate-50 dark:bg-slate-900/80 border-b">
+                          <tr>
+                            <th className="p-3">Txn ID</th>
+                            <th className="p-3">Vehicle & City</th>
+                            <th className="p-3 text-right">Purchase Cost</th>
+                            <th className="p-3 text-right">Expenses</th>
+                            <th className="p-3 text-right">Realization</th>
+                            <th className="p-3 text-right">Net Profit</th>
+                            <th className="p-3">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y">
+                          {data.financeReport.map((f: any) => (
+                            <tr key={f.transactionCode}>
+                              <td className="p-3 font-semibold">{f.transactionCode}</td>
+                              <td className="p-3">{f.vehicle} · {f.city}</td>
+                              <td className="p-3 text-right">{formatINR(f.purchaseCost)}</td>
+                              <td className="p-3 text-right">{formatINR(f.expenses)}</td>
+                              <td className="p-3 text-right">{formatINR(f.realization)}</td>
+                              <td className={`p-3 text-right font-bold ${f.netProfit >= 0 ? "text-emerald-600" : "text-red-500"}`}>{formatINR(f.netProfit)}</td>
+                              <td className="p-3"><StatusBadge value={f.status} /></td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                )}
               </Card>
             </div>
           )}
 
           {tab === "operations" && (
             <Card className="overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs text-left">
-                  <thead className="bg-slate-50 dark:bg-slate-900/80 border-b">
-                    <tr>
-                      <th className="p-3">Vehicle ID</th>
-                      <th className="p-3">Reg & Model</th>
-                      <th className="p-3">City</th>
-                      <th className="p-3">Pickup Status</th>
-                      <th className="p-3">Docs Verified</th>
-                      <th className="p-3">Processing</th>
-                      <th className="p-3">Purchase Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
+              {data.operationsReport.length === 0 ? <EmptyState title="No vehicle operations data yet" /> : (
+                <>
+                  <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
                     {data.operationsReport.map((o: any) => (
-                      <tr key={o.vehicleCode}>
-                        <td className="p-3 font-semibold">{o.vehicleCode}</td>
-                        <td className="p-3">{o.registrationNumber} — {o.vehicle}</td>
-                        <td className="p-3">{o.city}</td>
-                        <td className="p-3"><StatusBadge value={o.pickupStatus} /></td>
-                        <td className="p-3">{o.docsVerified}</td>
-                        <td className="p-3">{o.processingStatus}</td>
-                        <td className="p-3"><StatusBadge value={o.purchaseStatus} /></td>
-                      </tr>
+                      <div key={o.vehicleCode} className="p-3.5 space-y-1.5 text-xs">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="font-bold">{o.vehicleCode} · {o.registrationNumber}</div>
+                            <div className="text-[11px] text-slate-500">{o.vehicle} · {o.city}</div>
+                          </div>
+                          <StatusBadge value={o.purchaseStatus} />
+                        </div>
+                        <div className="flex flex-wrap items-center justify-between gap-2 text-[11px]">
+                          <StatusBadge value={o.pickupStatus} />
+                          <span className="text-slate-500">Docs: {o.docsVerified} · {o.processingStatus}</span>
+                        </div>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
-              </div>
+                  </div>
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full text-xs text-left">
+                      <thead className="bg-slate-50 dark:bg-slate-900/80 border-b">
+                        <tr>
+                          <th className="p-3">Vehicle ID</th>
+                          <th className="p-3">Reg & Model</th>
+                          <th className="p-3">City</th>
+                          <th className="p-3">Pickup Status</th>
+                          <th className="p-3">Docs Verified</th>
+                          <th className="p-3">Processing</th>
+                          <th className="p-3">Purchase Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {data.operationsReport.map((o: any) => (
+                          <tr key={o.vehicleCode}>
+                            <td className="p-3 font-semibold">{o.vehicleCode}</td>
+                            <td className="p-3">{o.registrationNumber} — {o.vehicle}</td>
+                            <td className="p-3">{o.city}</td>
+                            <td className="p-3"><StatusBadge value={o.pickupStatus} /></td>
+                            <td className="p-3">{o.docsVerified}</td>
+                            <td className="p-3">{o.processingStatus}</td>
+                            <td className="p-3"><StatusBadge value={o.purchaseStatus} /></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
             </Card>
           )}
 
           {tab === "team" && (
             <Card className="overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs text-left">
-                  <thead className="bg-slate-50 dark:bg-slate-900/80 border-b">
-                    <tr>
-                      <th className="p-3">Code</th>
-                      <th className="p-3">Employee & Role</th>
-                      <th className="p-3">City</th>
-                      <th className="p-3 text-right">Assigned</th>
-                      <th className="p-3 text-right">Qualified</th>
-                      <th className="p-3 text-right">Completed</th>
-                      <th className="p-3 text-right">Conv %</th>
-                      <th className="p-3 text-right">Target Ach %</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
+              {data.teamReport.length === 0 ? <EmptyState title="No team report metrics yet" /> : (
+                <>
+                  <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
                     {data.teamReport.map((t: any) => (
-                      <tr key={t.employeeCode}>
-                        <td className="p-3 font-semibold">{t.employeeCode}</td>
-                        <td className="p-3">{t.name} ({t.role})</td>
-                        <td className="p-3">{t.city}</td>
-                        <td className="p-3 text-right">{t.assignedLeads}</td>
-                        <td className="p-3 text-right">{t.qualifiedLeads}</td>
-                        <td className="p-3 text-right font-bold">{t.completedDeals}</td>
-                        <td className="p-3 text-right">{t.conversionRate}%</td>
-                        <td className="p-3 text-right font-semibold">{t.targetAchievementPct}%</td>
-                      </tr>
+                      <div key={t.employeeCode} className="p-3.5 space-y-1.5 text-xs">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="font-bold">{t.employeeCode} · {t.name}</div>
+                            <div className="text-[11px] text-slate-500">{t.role} · {t.city}</div>
+                          </div>
+                          <span className="font-bold text-[#0B5CA8]">{t.conversionRate}% Conv</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-900/60 text-[11px] tabular-nums">
+                          <div><span className="text-slate-400 block">Assigned</span><strong>{t.assignedLeads}</strong></div>
+                          <div><span className="text-slate-400 block">Qualified</span><strong>{t.qualifiedLeads}</strong></div>
+                          <div><span className="text-slate-400 block">Target Ach</span><strong>{t.targetAchievementPct}%</strong></div>
+                        </div>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
-              </div>
+                  </div>
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full text-xs text-left">
+                      <thead className="bg-slate-50 dark:bg-slate-900/80 border-b">
+                        <tr>
+                          <th className="p-3">Code</th>
+                          <th className="p-3">Employee & Role</th>
+                          <th className="p-3">City</th>
+                          <th className="p-3 text-right">Assigned</th>
+                          <th className="p-3 text-right">Qualified</th>
+                          <th className="p-3 text-right">Completed</th>
+                          <th className="p-3 text-right">Conv %</th>
+                          <th className="p-3 text-right">Target Ach %</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {data.teamReport.map((t: any) => (
+                          <tr key={t.employeeCode}>
+                            <td className="p-3 font-semibold">{t.employeeCode}</td>
+                            <td className="p-3">{t.name} ({t.role})</td>
+                            <td className="p-3">{t.city}</td>
+                            <td className="p-3 text-right">{t.assignedLeads}</td>
+                            <td className="p-3 text-right">{t.qualifiedLeads}</td>
+                            <td className="p-3 text-right font-bold">{t.completedDeals}</td>
+                            <td className="p-3 text-right">{t.conversionRate}%</td>
+                            <td className="p-3 text-right font-semibold">{t.targetAchievementPct}%</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
             </Card>
           )}
         </div>

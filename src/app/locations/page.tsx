@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Award, MapPin, TrendingDown, TrendingUp } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { AppShell } from "@/components/AppShell";
-import { Card, ErrorState, LoadingState, PageHeader } from "@/components/ui";
+import { Card, EmptyState, ErrorState, LoadingState, PageHeader } from "@/components/ui";
 import { GUJARAT_DISTRICTS, LEAD_STAGES } from "@/lib/constants";
 import { formatINR } from "@/lib/format";
 
@@ -57,7 +57,7 @@ export default function LocationsPage() {
       />
 
       <Card className="p-3.5 mb-5">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 text-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 text-xs">
           <select value={district} onChange={(e) => setDistrict(e.target.value)} className="px-2.5 py-1.5 rounded-lg border bg-white dark:bg-slate-900">
             <option value="All">All Gujarat Districts</option>
             {GUJARAT_DISTRICTS.map((d) => <option key={d.district} value={d.district}>{d.district}</option>)}
@@ -106,63 +106,94 @@ export default function LocationsPage() {
             ))}
           </div>
 
-          <Card className="p-5">
+          <Card className="p-3.5 sm:p-5 min-w-0">
             <h3 className="text-sm font-semibold mb-3">
               {view === "districts" ? "District-Wise" : "City-Wise"} Leads vs Qualified vs Completed
             </h3>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={rows.slice(0, 10)}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey={view === "districts" ? "district" : "city"} tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-                  <Tooltip />
-                  <Legend wrapperStyle={{ fontSize: 12 }} />
-                  <Bar dataKey="totalLeads" name="Total Leads" fill="#1B3156" />
-                  <Bar dataKey="qualifiedLeads" name="Qualified" fill="#0B5CA8" />
-                  <Bar dataKey="completedTransactions" name="Completed Txns" fill="#16A34A" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            {rows.length === 0 ? (
+              <EmptyState title="No location analytics data yet" description="Lead and transaction metrics across Gujarat cities and districts will populate here." />
+            ) : (
+              <div className="h-56 sm:h-64 min-w-0">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={rows.slice(0, 10)}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey={view === "districts" ? "district" : "city"} tick={{ fontSize: 10 }} />
+                    <YAxis tick={{ fontSize: 10 }} width={32} allowDecimals={false} />
+                    <Tooltip />
+                    <Legend wrapperStyle={{ fontSize: 11 }} />
+                    <Bar dataKey="totalLeads" name="Total Leads" fill="#1B3156" />
+                    <Bar dataKey="qualifiedLeads" name="Qualified" fill="#0B5CA8" />
+                    <Bar dataKey="completedTransactions" name="Completed Txns" fill="#16A34A" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </Card>
 
           <Card className="overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs text-left">
-                <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-500 border-b">
-                  <tr>
-                    <th className="p-3">{view === "districts" ? "District" : "City / District"}</th>
-                    <th className="p-3">PIN Codes</th>
-                    <th className="p-3 text-right">Total Leads</th>
-                    <th className="p-3 text-right">Qualified</th>
-                    <th className="p-3 text-right">Completed</th>
-                    <th className="p-3 text-right">Conv %</th>
-                    <th className="p-3 text-right">Est. Ad Spend</th>
-                    <th className="p-3 text-right">CPL</th>
-                    <th className="p-3 text-right">Purchase Spend</th>
-                    <th className="p-3 text-right">Net Profit</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            {rows.length === 0 ? (
+              <EmptyState title="No matching Gujarat locations" />
+            ) : (
+              <>
+                <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
                   {rows.map((r: any) => (
-                    <tr key={r.key} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
-                      <td className="p-3 font-semibold">{view === "districts" ? r.district : `${r.city} (${r.district})`}</td>
-                      <td className="p-3 text-[11px] text-slate-400">{r.pinCodes.slice(0, 3).join(", ") || "—"}</td>
-                      <td className="p-3 text-right font-bold">{r.totalLeads}</td>
-                      <td className="p-3 text-right text-[#0B5CA8] font-semibold">{r.qualifiedLeads}</td>
-                      <td className="p-3 text-right text-emerald-600 font-semibold">{r.completedTransactions}</td>
-                      <td className="p-3 text-right">{r.conversionRate}%</td>
-                      <td className="p-3 text-right tabular-nums">{r.adSpend !== null ? formatINR(r.adSpend) : "Restricted"}</td>
-                      <td className="p-3 text-right tabular-nums">{r.cpl !== null ? formatINR(r.cpl) : "Restricted"}</td>
-                      <td className="p-3 text-right tabular-nums">{r.purchaseExpenditure !== null ? formatINR(r.purchaseExpenditure) : "Restricted"}</td>
-                      <td className={`p-3 text-right font-bold tabular-nums ${(r.netProfit ?? 0) >= 0 ? "text-emerald-600" : "text-red-500"}`}>
-                        {r.netProfit !== null ? formatINR(r.netProfit) : "Restricted"}
-                      </td>
-                    </tr>
+                    <div key={r.key} className="p-3.5 space-y-2 text-xs">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <div className="font-bold text-sm">{view === "districts" ? r.district : `${r.city} (${r.district})`}</div>
+                          <div className="text-[11px] text-slate-400">PIN: {r.pinCodes.slice(0, 3).join(", ") || "—"}</div>
+                        </div>
+                        <span className="font-bold text-[#0B5CA8]">{r.conversionRate}% Conv</span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-900/60 text-[11px] tabular-nums">
+                        <div><span className="text-slate-400 block">Leads</span><strong>{r.totalLeads}</strong></div>
+                        <div><span className="text-slate-400 block">Qualified</span><strong className="text-[#0B5CA8]">{r.qualifiedLeads}</strong></div>
+                        <div><span className="text-slate-400 block">Completed</span><strong className="text-emerald-600">{r.completedTransactions}</strong></div>
+                        <div><span className="text-slate-400 block">Ad Spend</span><strong>{r.adSpend !== null ? formatINR(r.adSpend) : "Restricted"}</strong></div>
+                        <div><span className="text-slate-400 block">Purchase</span><strong>{r.purchaseExpenditure !== null ? formatINR(r.purchaseExpenditure) : "Restricted"}</strong></div>
+                        <div><span className="text-slate-400 block">Net Profit</span><strong className={(r.netProfit ?? 0) >= 0 ? "text-emerald-600" : "text-red-500"}>{r.netProfit !== null ? formatINR(r.netProfit) : "Restricted"}</strong></div>
+                      </div>
+                    </div>
                   ))}
-                </tbody>
-              </table>
-            </div>
+                </div>
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full text-xs text-left">
+                    <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-500 border-b">
+                      <tr>
+                        <th className="p-3">{view === "districts" ? "District" : "City / District"}</th>
+                        <th className="p-3">PIN Codes</th>
+                        <th className="p-3 text-right">Total Leads</th>
+                        <th className="p-3 text-right">Qualified</th>
+                        <th className="p-3 text-right">Completed</th>
+                        <th className="p-3 text-right">Conv %</th>
+                        <th className="p-3 text-right">Est. Ad Spend</th>
+                        <th className="p-3 text-right">CPL</th>
+                        <th className="p-3 text-right">Purchase Spend</th>
+                        <th className="p-3 text-right">Net Profit</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {rows.map((r: any) => (
+                        <tr key={r.key} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
+                          <td className="p-3 font-semibold">{view === "districts" ? r.district : `${r.city} (${r.district})`}</td>
+                          <td className="p-3 text-[11px] text-slate-400">{r.pinCodes.slice(0, 3).join(", ") || "—"}</td>
+                          <td className="p-3 text-right font-bold">{r.totalLeads}</td>
+                          <td className="p-3 text-right text-[#0B5CA8] font-semibold">{r.qualifiedLeads}</td>
+                          <td className="p-3 text-right text-emerald-600 font-semibold">{r.completedTransactions}</td>
+                          <td className="p-3 text-right">{r.conversionRate}%</td>
+                          <td className="p-3 text-right tabular-nums">{r.adSpend !== null ? formatINR(r.adSpend) : "Restricted"}</td>
+                          <td className="p-3 text-right tabular-nums">{r.cpl !== null ? formatINR(r.cpl) : "Restricted"}</td>
+                          <td className="p-3 text-right tabular-nums">{r.purchaseExpenditure !== null ? formatINR(r.purchaseExpenditure) : "Restricted"}</td>
+                          <td className={`p-3 text-right font-bold tabular-nums ${(r.netProfit ?? 0) >= 0 ? "text-emerald-600" : "text-red-500"}`}>
+                            {r.netProfit !== null ? formatINR(r.netProfit) : "Restricted"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
           </Card>
         </div>
       )}

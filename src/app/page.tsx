@@ -225,16 +225,16 @@ export default function DashboardPage() {
           <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* A. Lead Generation Trend */}
             {data.permissions.canViewLeads && (
-              <Card className="p-5">
-              <div className="flex items-center justify-between mb-4">
-                <div>
+              <Card className="p-3.5 sm:p-5 min-w-0">
+              <div className="flex items-center justify-between gap-2 mb-4">
+                <div className="min-w-0">
                   <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
                     Lead Generation Trend
                   </h2>
                   <p className="text-xs text-slate-500">Current vs previous period ({granularity})</p>
                 </div>
               </div>
-              <div className="h-64">
+              <div className="h-56 sm:h-64 min-w-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={data.charts.leadGenTrend}>
                     <defs>
@@ -244,10 +244,10 @@ export default function DashboardPage() {
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                    <XAxis dataKey="bucket" tick={{ fontSize: 11 }} />
-                    <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                    <XAxis dataKey="bucket" tick={{ fontSize: 10 }} />
+                    <YAxis tick={{ fontSize: 10 }} width={32} allowDecimals={false} />
                     <Tooltip />
-                    <Legend wrapperStyle={{ fontSize: 12 }} />
+                    <Legend wrapperStyle={{ fontSize: 11 }} />
                     <Area
                       type="monotone"
                       dataKey="leads"
@@ -272,26 +272,26 @@ export default function DashboardPage() {
 
             {/* B. Advertising Spend Trend */}
             {data.permissions.canViewAds && (
-              <Card className="p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
+              <Card className="p-3.5 sm:p-5 min-w-0">
+                <div className="flex items-center justify-between gap-2 mb-4">
+                  <div className="min-w-0">
                     <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
                       Meta Advertising Spend Trend (₹)
                     </h2>
                     <p className="text-xs text-slate-500">Facebook vs Instagram spend ({granularity})</p>
                   </div>
-                  <Link href="/meta-ads" className="text-xs font-medium text-[#0B5CA8] hover:underline">
+                  <Link href="/meta-ads" className="text-xs font-medium text-[#0B5CA8] hover:underline shrink-0">
                     Open Meta Ads →
                   </Link>
                 </div>
-                <div className="h-64">
+                <div className="h-56 sm:h-64 min-w-0">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={data.charts.adSpendTrend}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                      <XAxis dataKey="bucket" tick={{ fontSize: 11 }} />
-                      <YAxis tick={{ fontSize: 11 }} />
+                      <XAxis dataKey="bucket" tick={{ fontSize: 10 }} />
+                      <YAxis tick={{ fontSize: 10 }} width={42} />
                       <Tooltip formatter={(val: any) => formatINR(Number(val))} />
-                      <Legend wrapperStyle={{ fontSize: 12 }} />
+                      <Legend wrapperStyle={{ fontSize: 11 }} />
                       <Bar dataKey="facebook" name="Facebook (₹)" stackId="a" fill="#1B3156" radius={[0, 0, 0, 0]} />
                       <Bar dataKey="instagram" name="Instagram (₹)" stackId="a" fill="#D62828" radius={[4, 4, 0, 0]} />
                     </BarChart>
@@ -302,24 +302,24 @@ export default function DashboardPage() {
 
             {/* C. Lead Conversion Funnel */}
             {data.permissions.canViewLeads && (
-              <Card className="p-5">
-              <div className="flex items-center justify-between mb-4">
-                <div>
+              <Card className="p-3.5 sm:p-5 min-w-0">
+              <div className="flex items-center justify-between gap-2 mb-4">
+                <div className="min-w-0">
                   <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
                     Lead Conversion Funnel
                   </h2>
                   <p className="text-xs text-slate-500">Enquiry progression across key stages</p>
                 </div>
-                <Link href="/leads?view=pipeline" className="text-xs font-medium text-[#0B5CA8] hover:underline">
+                <Link href="/leads?view=pipeline" className="text-xs font-medium text-[#0B5CA8] hover:underline shrink-0">
                   View Kanban →
                 </Link>
               </div>
-              <div className="h-64">
+              <div className="h-64 min-w-0">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={data.charts.conversionFunnel} layout="vertical" margin={{ left: 25 }}>
+                  <BarChart data={data.charts.conversionFunnel} layout="vertical" margin={{ left: 0, right: 12 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={false} />
-                    <XAxis type="number" tick={{ fontSize: 11 }} allowDecimals={false} />
-                    <YAxis dataKey="stage" type="category" width={115} tick={{ fontSize: 11 }} />
+                    <XAxis type="number" tick={{ fontSize: 10 }} allowDecimals={false} />
+                    <YAxis dataKey="stage" type="category" width={94} tick={{ fontSize: 10 }} />
                     <Tooltip />
                     <Bar dataKey="count" name="Leads" fill="#0B5CA8" radius={[0, 4, 4, 0]}>
                       {data.charts.conversionFunnel.map((entry, idx) => (
@@ -337,44 +337,46 @@ export default function DashboardPage() {
 
             {/* D. Lead Source Distribution */}
             {data.permissions.canViewLeads && (
-              <Card className="p-5">
-              <div className="flex items-center justify-between mb-4">
-                <div>
+              <Card className="p-3.5 sm:p-5 min-w-0">
+              <div className="flex items-center justify-between gap-2 mb-4">
+                <div className="min-w-0">
                   <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
                     Lead Source Distribution
                   </h2>
                   <p className="text-xs text-slate-500">Enquiries across Meta, WhatsApp, Web & Calls</p>
                 </div>
               </div>
-              <div className="h-64 grid grid-cols-1 sm:grid-cols-2 items-center">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={data.charts.leadSourceDistribution}
-                      dataKey="count"
-                      nameKey="name"
-                      innerRadius={48}
-                      outerRadius={80}
-                      paddingAngle={2}
-                    >
-                      {data.charts.leadSourceDistribution.map((entry, idx) => (
-                        <Cell key={entry.name} fill={SOURCE_COLORS[idx % SOURCE_COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="space-y-1.5 pr-2 max-h-56 overflow-y-auto">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+                <div className="h-48 sm:h-60 min-w-0">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={data.charts.leadSourceDistribution}
+                        dataKey="count"
+                        nameKey="name"
+                        innerRadius={44}
+                        outerRadius={74}
+                        paddingAngle={2}
+                      >
+                        {data.charts.leadSourceDistribution.map((entry, idx) => (
+                          <Cell key={entry.name} fill={SOURCE_COLORS[idx % SOURCE_COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="space-y-1.5 pr-1 max-h-48 sm:max-h-56 overflow-y-auto">
                   {data.charts.leadSourceDistribution.map((s, idx) => (
-                    <div key={s.name} className="flex items-center justify-between text-xs">
-                      <span className="flex items-center gap-2 truncate">
+                    <div key={s.name} className="flex items-center justify-between gap-2 text-xs">
+                      <span className="flex items-center gap-2 min-w-0">
                         <span
                           className="w-2.5 h-2.5 rounded-full shrink-0"
                           style={{ backgroundColor: SOURCE_COLORS[idx % SOURCE_COLORS.length] }}
                         />
                         <span className="truncate">{s.name}</span>
                       </span>
-                      <span className="font-semibold tabular-nums">{s.count}</span>
+                      <span className="font-semibold tabular-nums shrink-0">{s.count}</span>
                     </div>
                   ))}
                 </div>
@@ -386,9 +388,9 @@ export default function DashboardPage() {
           {/* E. Business Performance Trend + F. Recent Business Activity */}
           <section className="grid grid-cols-1 lg:grid-cols-12 gap-4">
             {data.permissions.canViewFinance && (
-              <Card className="lg:col-span-7 p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
+              <Card className="lg:col-span-7 p-3.5 sm:p-5 min-w-0">
+                <div className="flex items-center justify-between gap-2 mb-4">
+                  <div className="min-w-0">
                     <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
                       Business Financial Performance Trend (₹)
                     </h2>
@@ -396,16 +398,16 @@ export default function DashboardPage() {
                       Purchase Expenditure vs Expenses vs Realized Value vs Net Profit
                     </p>
                   </div>
-                  <Link href="/transactions" className="text-xs font-medium text-[#0B5CA8] hover:underline">
+                  <Link href="/transactions" className="text-xs font-medium text-[#0B5CA8] hover:underline shrink-0">
                     Finance Ledger →
                   </Link>
                 </div>
-                <div className="h-64">
+                <div className="h-56 sm:h-64 min-w-0">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={data.charts.businessPerformanceTrend}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                      <XAxis dataKey="bucket" tick={{ fontSize: 11 }} />
-                      <YAxis tick={{ fontSize: 11 }} />
+                      <XAxis dataKey="bucket" tick={{ fontSize: 10 }} />
+                      <YAxis tick={{ fontSize: 10 }} width={42} />
                       <Tooltip formatter={(val: any) => formatINR(Number(val))} />
                       <Legend wrapperStyle={{ fontSize: 11 }} />
                       <Bar dataKey="purchaseExpenditure" name="Purchase Spend" fill="#1B3156" />
@@ -420,44 +422,48 @@ export default function DashboardPage() {
 
             {/* F. Recent Business Activity */}
             {data.permissions.canViewLeads && (
-              <Card className={data.permissions.canViewFinance ? "lg:col-span-5 p-5" : "lg:col-span-12 p-5"}>
+              <Card className={data.permissions.canViewFinance ? "lg:col-span-5 p-3.5 sm:p-5 min-w-0" : "lg:col-span-12 p-3.5 sm:p-5 min-w-0"}>
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                   <Activity className="w-4 h-4 text-[#0B5CA8]" />
                   Recent Business Activity
                 </h2>
               </div>
-              <div className="space-y-2.5 max-h-64 overflow-y-auto pr-1">
-                {data.recentActivity.map((act) => (
-                  <Link
-                    key={act.id}
-                    href={`/leads/${act.leadId}`}
-                    className="block p-2.5 rounded-lg border border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors"
-                  >
-                    <div className="flex items-center justify-between gap-2 text-xs">
-                      <span className="font-semibold text-[#0B5CA8] dark:text-blue-400">
-                        {act.leadCode} · {act.customerName}
-                      </span>
-                      <span className="text-[10px] text-slate-400">{formatDateTime(act.createdAt)}</span>
-                    </div>
-                    <p className="text-xs text-slate-700 dark:text-slate-300 mt-0.5 line-clamp-1">
-                      {act.summary}
-                    </p>
-                    <span className="text-[10px] text-slate-400">By {act.actor}</span>
-                  </Link>
-                ))}
-              </div>
+              {data.recentActivity.length === 0 ? (
+                <p className="text-xs text-slate-400 py-8 text-center">No business activity logged in this period yet.</p>
+              ) : (
+                <div className="space-y-2.5 max-h-64 overflow-y-auto pr-1">
+                  {data.recentActivity.map((act) => (
+                    <Link
+                      key={act.id}
+                      href={`/leads/${act.leadId}`}
+                      className="block p-2.5 rounded-lg border border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-1 text-xs">
+                        <span className="font-semibold text-[#0B5CA8] dark:text-blue-400 truncate">
+                          {act.leadCode} · {act.customerName}
+                        </span>
+                        <span className="text-[10px] text-slate-400 shrink-0">{formatDateTime(act.createdAt)}</span>
+                      </div>
+                      <p className="text-xs text-slate-700 dark:text-slate-300 mt-0.5 line-clamp-1">
+                        {act.summary}
+                      </p>
+                      <span className="text-[10px] text-slate-400">By {act.actor}</span>
+                    </Link>
+                  ))}
+                </div>
+              )}
               </Card>
             )}
           </section>
 
           {/* 5.4 Dashboard Quick Widgets */}
           <section>
-            <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-3">
               <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
                 Operational Quick Widgets
               </h2>
-              <div className="flex flex-wrap gap-1.5 text-xs">
+              <div className="flex overflow-x-auto no-scrollbar sm:flex-wrap gap-1.5 text-xs pb-1 sm:pb-0">
                 {[
                   ...(data.permissions.canViewLeads ? [{ key: "followups", label: "Follow-ups (Today & Overdue)" }] : []),
                   ...(data.permissions.canViewLeads ? [{ key: "leads", label: "Enquiries (New, Unassigned, Hot)" }] : []),
@@ -467,7 +473,7 @@ export default function DashboardPage() {
                   <button
                     key={t.key}
                     onClick={() => setActiveWidgetTab(t.key as any)}
-                    className={`px-3 py-1.5 rounded-lg border font-medium transition-colors ${
+                    className={`px-3 py-1.5 rounded-lg border font-medium transition-colors shrink-0 ${
                       activeWidgetTab === t.key
                         ? "bg-[#1B3156] text-white border-[#1B3156]"
                         : "bg-white dark:bg-[#111a2e] border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300"
@@ -481,12 +487,12 @@ export default function DashboardPage() {
 
             {activeWidgetTab === "followups" && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <Card className="p-4">
+                <Card className="p-3.5 sm:p-4">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                       Today&apos;s Follow-ups ({data.widgets.todayFollowUps.length})
                     </h3>
-                    <Link href="/follow-ups?tab=today" className="text-xs text-[#0B5CA8] hover:underline">
+                    <Link href="/follow-ups?tab=today" className="text-xs text-[#0B5CA8] hover:underline shrink-0">
                       Open All
                     </Link>
                   </div>
@@ -495,28 +501,28 @@ export default function DashboardPage() {
                       <p className="text-xs text-slate-400 py-4 text-center">No follow-ups scheduled for today.</p>
                     ) : (
                       data.widgets.todayFollowUps.map((f) => (
-                        <div key={f.id} className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 text-xs">
-                          <div>
-                            <Link href={`/leads/${f.lead.id}`} className="font-semibold text-slate-900 dark:text-white hover:text-[#0B5CA8]">
+                        <div key={f.id} className="flex items-center justify-between gap-2 p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 text-xs">
+                          <div className="min-w-0">
+                            <Link href={`/leads/${f.lead.id}`} className="font-semibold text-slate-900 dark:text-white hover:text-[#0B5CA8] block truncate">
                               {f.customer.name} ({f.lead.leadCode})
                             </Link>
-                            <div className="text-[11px] text-slate-500">
+                            <div className="text-[11px] text-slate-500 truncate">
                               {f.type} · {f.followUpTime} · {f.assignedEmployee.fullName}
                             </div>
                           </div>
-                          <StatusBadge value={f.priority} />
+                          <StatusBadge value={f.priority} className="shrink-0" />
                         </div>
                       ))
                     )}
                   </div>
                 </Card>
 
-                <Card className="p-4">
+                <Card className="p-3.5 sm:p-4">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-xs font-semibold uppercase tracking-wider text-[#D62828] flex items-center gap-1.5">
                       <Clock className="w-3.5 h-3.5" /> Overdue Follow-ups ({data.widgets.overdueFollowUps.length})
                     </h3>
-                    <Link href="/follow-ups?tab=overdue" className="text-xs text-[#0B5CA8] hover:underline">
+                    <Link href="/follow-ups?tab=overdue" className="text-xs text-[#0B5CA8] hover:underline shrink-0">
                       Recover All
                     </Link>
                   </div>
@@ -525,16 +531,16 @@ export default function DashboardPage() {
                       <p className="text-xs text-slate-400 py-4 text-center">No overdue follow-ups.</p>
                     ) : (
                       data.widgets.overdueFollowUps.map((f) => (
-                        <div key={f.id} className="flex items-center justify-between p-2.5 rounded-lg bg-red-50/50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/50 text-xs">
-                          <div>
-                            <Link href={`/leads/${f.lead.id}`} className="font-semibold text-slate-900 dark:text-white hover:text-[#0B5CA8]">
+                        <div key={f.id} className="flex items-center justify-between gap-2 p-2.5 rounded-lg bg-red-50/50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/50 text-xs">
+                          <div className="min-w-0">
+                            <Link href={`/leads/${f.lead.id}`} className="font-semibold text-slate-900 dark:text-white hover:text-[#0B5CA8] block truncate">
                               {f.customer.name} ({f.lead.leadCode})
                             </Link>
-                            <div className="text-[11px] text-slate-500">
+                            <div className="text-[11px] text-slate-500 truncate">
                               Due {formatDate(f.followUpDate)} · {f.type} · {f.assignedEmployee.fullName}
                             </div>
                           </div>
-                          <StatusBadge value="Missed" />
+                          <StatusBadge value="Missed" className="shrink-0" />
                         </div>
                       ))
                     )}
@@ -551,12 +557,12 @@ export default function DashboardPage() {
                   { title: "High-Priority (Hot) Leads", rows: data.widgets.highPriorityLeads },
                   { title: "Recent Customer Enquiries", rows: data.widgets.recentCustomerEnquiries },
                 ].map((box) => (
-                  <Card key={box.title} className="p-4">
+                  <Card key={box.title} className="p-3.5 sm:p-4">
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                         {box.title}
                       </h3>
-                      <Link href="/leads" className="text-xs text-[#0B5CA8] hover:underline">View</Link>
+                      <Link href="/leads" className="text-xs text-[#0B5CA8] hover:underline shrink-0">View</Link>
                     </div>
                     <div className="space-y-2">
                       {box.rows.length === 0 ? (
@@ -568,9 +574,9 @@ export default function DashboardPage() {
                             href={`/leads/${l.id}`}
                             className="block p-2 rounded-lg bg-slate-50 dark:bg-slate-900/60 hover:bg-blue-50/50 text-xs"
                           >
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-center justify-between gap-2">
                               <span className="font-semibold truncate">{l.customer.name}</span>
-                              <StatusBadge value={l.priority} />
+                              <StatusBadge value={l.priority} className="shrink-0" />
                             </div>
                             <div className="text-[11px] text-slate-500 truncate mt-0.5">
                               {l.leadCode} · {l.customer.city} · {l.leadSource?.name}
@@ -586,23 +592,23 @@ export default function DashboardPage() {
 
             {activeWidgetTab === "performance" && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <Card className="p-4">
+                <Card className="p-3.5 sm:p-4">
                   <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">
                     Top-Performing Campaigns
                   </h3>
                   {data.widgets.topCampaigns.length === 0 ? (
-                    <p className="text-xs text-slate-400 py-4">Restricted or no campaign data.</p>
+                    <p className="text-xs text-slate-400 py-4 text-center">Restricted or no campaign data.</p>
                   ) : (
                     <div className="space-y-2">
                       {data.widgets.topCampaigns.map((c) => (
                         <Link
                           key={c.id}
                           href={`/meta-ads/campaigns/${c.id}`}
-                          className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 hover:bg-blue-50/50 text-xs"
+                          className="flex items-center justify-between gap-2 p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 hover:bg-blue-50/50 text-xs"
                         >
                           <div className="min-w-0">
                             <div className="font-semibold truncate">{c.name}</div>
-                            <div className="text-[11px] text-slate-500">{c.platform} · Spend {formatINR(c.spend)}</div>
+                            <div className="text-[11px] text-slate-500 truncate">{c.platform} · Spend {formatINR(c.spend)}</div>
                           </div>
                           <div className="text-right shrink-0">
                             <div className="font-bold text-[#0B5CA8]">{c.leads} Leads</div>
@@ -614,72 +620,82 @@ export default function DashboardPage() {
                   )}
                 </Card>
 
-                <Card className="p-4">
+                <Card className="p-3.5 sm:p-4">
                   <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">
                     Top-Performing Salespeople
                   </h3>
-                  <div className="space-y-2">
-                    {data.widgets.topSalespeople.map((e) => (
-                      <div key={e.id} className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 text-xs">
-                        <div>
-                          <div className="font-semibold">{e.name}</div>
-                          <div className="text-[11px] text-slate-500">{e.city} · {e.assigned} Leads · {e.qualified} Qualified</div>
+                  {data.widgets.topSalespeople.length === 0 ? (
+                    <p className="text-xs text-slate-400 py-4 text-center">No salesperson activity in period.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {data.widgets.topSalespeople.map((e) => (
+                        <div key={e.id} className="flex items-center justify-between gap-2 p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 text-xs">
+                          <div className="min-w-0">
+                            <div className="font-semibold truncate">{e.name}</div>
+                            <div className="text-[11px] text-slate-500 truncate">{e.city} · {e.assigned} Leads · {e.qualified} Qualified</div>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <div className="font-bold text-emerald-600">{e.completed} Completed</div>
+                            <div className="text-[11px] text-slate-500">{e.conversionRate}% Conv.</div>
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <div className="font-bold text-emerald-600">{e.completed} Completed</div>
-                          <div className="text-[11px] text-slate-500">{e.conversionRate}% Conv.</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </Card>
               </div>
             )}
 
             {activeWidgetTab === "operations" && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <Card className="p-4">
+                <Card className="p-3.5 sm:p-4">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                       Upcoming Vehicle Pickups
                     </h3>
-                    <Link href="/vehicles?tab=pickup" className="text-xs text-[#0B5CA8] hover:underline">Manage</Link>
+                    <Link href="/vehicles?tab=pickup" className="text-xs text-[#0B5CA8] hover:underline shrink-0">Manage</Link>
                   </div>
-                  <div className="space-y-2">
-                    {data.widgets.upcomingPickups.map((p) => (
-                      <div key={p.id} className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 text-xs">
-                        <div>
-                          <div className="font-semibold">
-                            {p.vehicle.manufacturer} {p.vehicle.model} ({p.vehicle.registrationNumber})
+                  {data.widgets.upcomingPickups.length === 0 ? (
+                    <p className="text-xs text-slate-400 py-4 text-center">No upcoming vehicle pickups scheduled.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {data.widgets.upcomingPickups.map((p) => (
+                        <div key={p.id} className="flex items-center justify-between gap-2 p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 text-xs">
+                          <div className="min-w-0">
+                            <div className="font-semibold truncate">
+                              {p.vehicle.manufacturer} {p.vehicle.model} ({p.vehicle.registrationNumber})
+                            </div>
+                            <div className="text-[11px] text-slate-500 truncate">
+                              {p.customer.name} · {p.city} · {p.scheduledDate ? formatDate(p.scheduledDate) : "Date TBD"}
+                            </div>
                           </div>
-                          <div className="text-[11px] text-slate-500">
-                            {p.customer.name} · {p.city} · {p.scheduledDate ? formatDate(p.scheduledDate) : "Date TBD"}
-                          </div>
+                          <StatusBadge value={p.pickupStatus} className="shrink-0" />
                         </div>
-                        <StatusBadge value={p.pickupStatus} />
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </Card>
 
-                <Card className="p-4">
+                <Card className="p-3.5 sm:p-4">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                       Latest Transactions
                     </h3>
-                    <Link href="/transactions" className="text-xs text-[#0B5CA8] hover:underline">View All</Link>
+                    <Link href="/transactions" className="text-xs text-[#0B5CA8] hover:underline shrink-0">View All</Link>
                   </div>
                   {!data.permissions.canViewFinance ? (
                     <p className="text-xs text-slate-400 py-4 text-center">Financial records restricted for your role.</p>
+                  ) : data.widgets.latestTransactions.length === 0 ? (
+                    <p className="text-xs text-slate-400 py-4 text-center">No financial transactions recorded yet.</p>
                   ) : (
                     <div className="space-y-2">
                       {data.widgets.latestTransactions.map((t) => (
-                        <div key={t.id} className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 text-xs">
-                          <div>
-                            <div className="font-semibold">{t.transactionCode} · {t.vehicle.registrationNumber}</div>
-                            <div className="text-[11px] text-slate-500">{t.customer.name} · {t.customer.city}</div>
+                        <div key={t.id} className="flex items-center justify-between gap-2 p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 text-xs">
+                          <div className="min-w-0">
+                            <div className="font-semibold truncate">{t.transactionCode} · {t.vehicle.registrationNumber}</div>
+                            <div className="text-[11px] text-slate-500 truncate">{t.customer.name} · {t.customer.city}</div>
                           </div>
-                          <div className="text-right">
+                          <div className="text-right shrink-0">
                             <div className="font-bold">{formatINR(t.vehiclePurchaseAmount)}</div>
                             <StatusBadge value={t.paymentStatus} />
                           </div>

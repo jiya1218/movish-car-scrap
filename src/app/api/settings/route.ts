@@ -139,6 +139,10 @@ export async function PATCH(req: Request) {
       if (!email || !name || !roleId) {
         return NextResponse.json({ error: "Name, email, and role are required." }, { status: 400 });
       }
+      const existingUser = await prisma.user.findUnique({ where: { email } });
+      if (existingUser) {
+        return NextResponse.json({ error: "A user with this email already exists." }, { status: 409 });
+      }
       const user = await prisma.user.create({
         data: {
           email,

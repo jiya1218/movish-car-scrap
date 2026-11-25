@@ -4,7 +4,7 @@ import React, { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Building2, Check, Database, Plug, Plus, Shield, Sliders, Users } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
-import { Card, ErrorState, LoadingState, Modal, PageHeader, StatusBadge } from "@/components/ui";
+import { Card, EmptyState, ErrorState, LoadingState, Modal, PageHeader, StatusBadge } from "@/components/ui";
 import { ALL_GUJARAT_33_DISTRICTS, LEAD_PRIORITIES, LEAD_STAGES, VEHICLE_CATEGORIES, VEHICLE_MANUFACTURERS } from "@/lib/constants";
 import { formatDateTime } from "@/lib/format";
 
@@ -81,7 +81,7 @@ function SettingsContent() {
         }
       />
 
-      <div className="flex flex-wrap gap-1.5 bg-white dark:bg-[#111a2e] p-1 rounded-xl border border-slate-200 dark:border-slate-800 w-fit text-xs mb-5">
+      <div className="flex overflow-x-auto no-scrollbar sm:flex-wrap gap-1.5 bg-white dark:bg-[#111a2e] p-1 rounded-xl border border-slate-200 dark:border-slate-800 w-full sm:w-fit max-w-full text-xs mb-5">
         {[
           { key: "company", label: "Company Profile", icon: <Building2 className="w-3.5 h-3.5" /> },
           { key: "users", label: "Users", icon: <Users className="w-3.5 h-3.5" /> },
@@ -90,7 +90,7 @@ function SettingsContent() {
           { key: "config", label: "Pipeline, Vehicles & Geo", icon: <Sliders className="w-3.5 h-3.5" /> },
           { key: "audit", label: "Audit Logs", icon: <Database className="w-3.5 h-3.5" /> },
         ].map((t) => (
-          <button key={t.key} onClick={() => setTab(t.key)} className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold ${tab === t.key ? "bg-[#0B5CA8] text-white" : "text-slate-600 dark:text-slate-300"}`}>
+          <button key={t.key} onClick={() => setTab(t.key)} className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold shrink-0 ${tab === t.key ? "bg-[#0B5CA8] text-white" : "text-slate-600 dark:text-slate-300"}`}>
             {t.icon} {t.label}
           </button>
         ))}
@@ -150,45 +150,72 @@ function SettingsContent() {
 
           {tab === "users" && (
             <Card className="overflow-hidden">
-              <div className="p-4 border-b flex items-center justify-between">
+              <div className="p-4 border-b flex flex-wrap items-center justify-between gap-2">
                 <h3 className="text-sm font-semibold">Login Accounts ({data.users.length})</h3>
                 <button onClick={() => setUserModal(true)} className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#0B5CA8] text-white">
                   <Plus className="w-3.5 h-3.5" /> Create User
                 </button>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs text-left">
-                  <thead className="bg-slate-50 dark:bg-slate-900/80 border-b">
-                    <tr>
-                      <th className="p-3">Name</th>
-                      <th className="p-3">Email</th>
-                      <th className="p-3">Role</th>
-                      <th className="p-3">Last Login</th>
-                      <th className="p-3">Status</th>
-                      <th className="p-3">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
+              {data.users.length === 0 ? <EmptyState title="No user accounts found" /> : (
+                <>
+                  <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
                     {data.users.map((u: any) => (
-                      <tr key={u.id}>
-                        <td className="p-3 font-semibold">{u.name}</td>
-                        <td className="p-3">{u.email}</td>
-                        <td className="p-3">{u.role.name}</td>
-                        <td className="p-3">{u.lastLoginAt ? formatDateTime(u.lastLoginAt) : "Never"}</td>
-                        <td className="p-3"><StatusBadge value={u.isActive ? "Active" : "Paused"} /></td>
-                        <td className="p-3">
+                      <div key={u.id} className="p-3.5 space-y-2 text-xs">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="font-semibold truncate">{u.name}</div>
+                            <div className="text-[11px] text-slate-500 truncate">{u.email}</div>
+                            <div className="text-[11px] text-slate-400">{u.role.name}</div>
+                          </div>
+                          <StatusBadge value={u.isActive ? "Active" : "Paused"} className="shrink-0" />
+                        </div>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[11px] text-slate-400">Last login: {u.lastLoginAt ? formatDateTime(u.lastLoginAt) : "Never"}</span>
                           <button
                             onClick={() => patchSetting({ action: "toggle_user", userId: u.id, isActive: !u.isActive }, "User status updated.")}
                             className="px-2.5 py-1 rounded border"
                           >
                             {u.isActive ? "Deactivate" : "Activate"}
                           </button>
-                        </td>
-                      </tr>
+                        </div>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
-              </div>
+                  </div>
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full text-xs text-left">
+                      <thead className="bg-slate-50 dark:bg-slate-900/80 border-b">
+                        <tr>
+                          <th className="p-3">Name</th>
+                          <th className="p-3">Email</th>
+                          <th className="p-3">Role</th>
+                          <th className="p-3">Last Login</th>
+                          <th className="p-3">Status</th>
+                          <th className="p-3">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {data.users.map((u: any) => (
+                          <tr key={u.id}>
+                            <td className="p-3 font-semibold">{u.name}</td>
+                            <td className="p-3">{u.email}</td>
+                            <td className="p-3">{u.role.name}</td>
+                            <td className="p-3">{u.lastLoginAt ? formatDateTime(u.lastLoginAt) : "Never"}</td>
+                            <td className="p-3"><StatusBadge value={u.isActive ? "Active" : "Paused"} /></td>
+                            <td className="p-3">
+                              <button
+                                onClick={() => patchSetting({ action: "toggle_user", userId: u.id, isActive: !u.isActive }, "User status updated.")}
+                                className="px-2.5 py-1 rounded border"
+                              >
+                                {u.isActive ? "Deactivate" : "Activate"}
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
             </Card>
           )}
 
@@ -302,7 +329,7 @@ function SettingsContent() {
 
               <Card className="p-5 space-y-3">
                 <h3 className="text-sm font-semibold">Scoring Rules, SLA & Gujarat Locations</h3>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div>
                     <label className="text-slate-500">High Intent Threshold</label>
                     <input type="number" value={scoringForm.highIntentThreshold || 70} onChange={(e) => setScoringForm({ ...scoringForm, highIntentThreshold: Number(e.target.value) })} className="w-full px-2.5 py-1.5 rounded border bg-transparent" />
@@ -324,7 +351,7 @@ function SettingsContent() {
 
                 <div className="pt-3 border-t">
                   <div className="font-semibold mb-2">Add Serviceable Gujarat City / PIN</div>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <select value={locForm.district} onChange={(e) => setLocForm({ ...locForm, district: e.target.value })} className="px-2 py-1.5 rounded border bg-white dark:bg-slate-900">
                       {ALL_GUJARAT_33_DISTRICTS.map((d) => <option key={d} value={d}>{d}</option>)}
                     </select>
@@ -350,31 +377,50 @@ function SettingsContent() {
             <Card className="overflow-hidden">
               {!data.canViewAudit ? (
                 <div className="p-8 text-center text-xs text-slate-500">Audit logs are restricted to Super Admin.</div>
+              ) : data.auditLogs.length === 0 ? (
+                <EmptyState title="No audit logs recorded yet" description="Login, lead, quotation, pickup, financial, and permission events are tracked here." />
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs text-left">
-                    <thead className="bg-slate-50 dark:bg-slate-900/80 border-b">
-                      <tr>
-                        <th className="p-3">Timestamp</th>
-                        <th className="p-3">Actor</th>
-                        <th className="p-3">Action</th>
-                        <th className="p-3">Entity</th>
-                        <th className="p-3">Summary</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y">
-                      {data.auditLogs.map((log: any) => (
-                        <tr key={log.id}>
-                          <td className="p-3 whitespace-nowrap text-slate-500">{formatDateTime(log.createdAt)}</td>
-                          <td className="p-3 font-semibold">{log.actorName}</td>
-                          <td className="p-3"><StatusBadge value={log.action} /></td>
-                          <td className="p-3">{log.entityType}</td>
-                          <td className="p-3">{log.summary}</td>
+                <>
+                  <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+                    {data.auditLogs.map((log: any) => (
+                      <div key={log.id} className="p-3.5 space-y-1.5 text-xs">
+                        <div className="flex items-start justify-between gap-2">
+                          <span className="font-semibold">{log.actorName}</span>
+                          <StatusBadge value={log.action} />
+                        </div>
+                        <p className="text-slate-700 dark:text-slate-300">{log.summary}</p>
+                        <div className="flex justify-between text-[11px] text-slate-400">
+                          <span>{log.entityType}</span>
+                          <span>{formatDateTime(log.createdAt)}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full text-xs text-left">
+                      <thead className="bg-slate-50 dark:bg-slate-900/80 border-b">
+                        <tr>
+                          <th className="p-3">Timestamp</th>
+                          <th className="p-3">Actor</th>
+                          <th className="p-3">Action</th>
+                          <th className="p-3">Entity</th>
+                          <th className="p-3">Summary</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody className="divide-y">
+                        {data.auditLogs.map((log: any) => (
+                          <tr key={log.id}>
+                            <td className="p-3 whitespace-nowrap text-slate-500">{formatDateTime(log.createdAt)}</td>
+                            <td className="p-3 font-semibold">{log.actorName}</td>
+                            <td className="p-3"><StatusBadge value={log.action} /></td>
+                            <td className="p-3">{log.entityType}</td>
+                            <td className="p-3">{log.summary}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
               )}
             </Card>
           )}

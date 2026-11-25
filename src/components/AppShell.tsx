@@ -157,7 +157,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <div className="min-h-screen flex bg-[#f4f6fa] dark:bg-[#0b1220] text-slate-900 dark:text-slate-100">
+    <div className="min-h-screen w-full overflow-x-hidden flex bg-[#f4f6fa] dark:bg-[#0b1220] text-slate-900 dark:text-slate-100">
       {/* Desktop Sidebar */}
       <aside
         className={cn(
@@ -210,43 +210,64 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {mobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden flex">
           <div className="fixed inset-0 bg-slate-950/60" onClick={() => setMobileOpen(false)} />
-          <aside className="relative w-72 bg-[#1B3156] text-white flex flex-col h-full z-10">
-            <div className="p-4 border-b border-white/10 flex items-center justify-between">
-              <div className="bg-white rounded-lg px-2.5 py-1">
-                <img src="/logo.png" alt="Movish Group" className="h-7 w-auto" />
+          <aside className="relative w-72 max-w-[85vw] bg-[#1B3156] text-white flex flex-col h-full z-10 shadow-2xl">
+            <div className="p-4 border-b border-white/10 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="bg-white rounded-lg px-2 py-1 shrink-0">
+                  <img src="/logo.png" alt="Movish Group" className="h-7 w-auto" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-xs font-bold tracking-wider text-white truncate">MOVISH BMS</div>
+                  <div className="text-[10px] text-blue-200/80 truncate">Gujarat Operations</div>
+                </div>
               </div>
-              <button onClick={() => setMobileOpen(false)} className="p-1.5 rounded-lg hover:bg-white/10">
+              <button onClick={() => setMobileOpen(false)} aria-label="Close navigation" className="p-1.5 rounded-lg hover:bg-white/10">
                 <X className="w-5 h-5" />
               </button>
             </div>
             {renderNavLinks(true)}
+            <div className="p-3 border-t border-white/10 text-xs space-y-2">
+              <div className="bg-white/10 rounded-lg p-2.5">
+                <div className="font-semibold text-white truncate">{user.name}</div>
+                <div className="text-[11px] text-blue-200 truncate">{user.roleName}</div>
+              </div>
+              <button
+                onClick={() => {
+                  setMobileOpen(false);
+                  logout();
+                }}
+                className="w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-white/10 hover:bg-[#D62828] text-white font-semibold transition-colors"
+              >
+                <LogOut className="w-3.5 h-3.5" /> Sign Out
+              </button>
+            </div>
           </aside>
         </div>
       )}
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 w-full">
         {/* Top Bar */}
-        <header className="sticky top-0 z-30 bg-white/95 dark:bg-[#111a2e]/95 backdrop-blur-sm border-b border-slate-200 dark:border-slate-800 px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 flex-1 min-w-0">
+        <header className="sticky top-0 z-30 bg-white/95 dark:bg-[#111a2e]/95 backdrop-blur-sm border-b border-slate-200 dark:border-slate-800 px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
             <button
               onClick={() => setMobileOpen(true)}
-              className="lg:hidden p-2 rounded-lg border border-slate-200 dark:border-slate-700"
+              className="lg:hidden p-2 rounded-lg border border-slate-200 dark:border-slate-700 shrink-0"
               aria-label="Open navigation"
             >
               <Menu className="w-4 h-4" />
             </button>
 
             {/* Global Search */}
-            <div className="relative flex-1 max-w-md">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <div className="relative flex-1 max-w-md min-w-0">
+              <Search className="w-4 h-4 text-slate-400 absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={searchQuery}
                 onFocus={() => searchResults.length > 0 && setSearchOpen(true)}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search customer, mobile, lead ID, GJ reg, model, campaign..."
-                className="w-full pl-9 pr-8 py-1.5 text-xs sm:text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0B5CA8]"
+                placeholder="Search customer, reg, city..."
+                className="w-full pl-8 sm:pl-9 pr-7 py-1.5 text-xs sm:text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0B5CA8]"
               />
               {searchQuery && (
                 <button
@@ -255,14 +276,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     setSearchResults([]);
                     setSearchOpen(false);
                   }}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  aria-label="Clear search"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
               )}
 
               {searchOpen && searchResults.length > 0 && (
-                <div className="absolute left-0 right-0 mt-1.5 bg-white dark:bg-[#111a2e] border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-50 max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
+                <div className="fixed inset-x-3 top-[60px] sm:absolute sm:inset-x-auto sm:top-full sm:left-0 sm:right-0 sm:mt-1.5 bg-white dark:bg-[#111a2e] border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-50 max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
                   {searchResults.map((res) => (
                     <button
                       key={`${res.type}-${res.id}`}
@@ -291,11 +313,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             {/* Active Role Badge */}
             <div className="hidden md:flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1 text-xs font-medium text-slate-700 dark:text-slate-200">
               <Shield className="w-3.5 h-3.5 text-[#0B5CA8] dark:text-blue-400" />
               <span>{user.roleName}</span>
+            </div>
+
+            {/* Compact mobile role badge */}
+            <div className="md:hidden flex items-center gap-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1 text-[10px] font-semibold text-slate-700 dark:text-slate-200 max-w-[92px] truncate" title={user.roleName}>
+              <Shield className="w-3 h-3 text-[#0B5CA8] shrink-0" />
+              <span className="truncate">{user.roleName.split(" /")[0]}</span>
             </div>
 
             {/* Theme Toggle */}
@@ -324,7 +352,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             {/* Sign Out */}
             <button
               onClick={logout}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-red-50 hover:text-[#D62828] hover:border-red-200 dark:hover:bg-red-950/50 text-xs font-medium text-slate-600 dark:text-slate-300 transition-colors"
+              className="inline-flex items-center gap-1.5 p-2 sm:px-2.5 sm:py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-red-50 hover:text-[#D62828] hover:border-red-200 dark:hover:bg-red-950/50 text-xs font-medium text-slate-600 dark:text-slate-300 transition-colors"
               title="Sign out"
             >
               <LogOut className="w-3.5 h-3.5" />
@@ -333,7 +361,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <main className="flex-1 p-4 sm:p-6 max-w-[1600px] w-full mx-auto">
+        <main className="flex-1 min-w-0 p-3 sm:p-5 lg:p-6 max-w-[1600px] w-full mx-auto">
           {isRouteRestricted ? (
             <div className="bg-white dark:bg-[#111a2e] border border-red-200 dark:border-red-900 rounded-xl p-8 text-center max-w-lg mx-auto mt-12">
               <Shield className="w-10 h-10 text-[#D62828] mx-auto mb-3" />

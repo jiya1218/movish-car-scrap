@@ -4,12 +4,14 @@ import React, { use, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, CalendarPlus, CheckCircle2, FileText, MessageSquarePlus, ShieldCheck } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
+import { useAuth } from "@/components/AuthContext";
 import { Card, ErrorState, LoadingState, Modal, PageHeader, StatusBadge } from "@/components/ui";
 import { FOLLOWUP_TYPES, LEAD_STAGES, LOST_REASONS } from "@/lib/constants";
 import { formatDate, formatDateTime, formatINR } from "@/lib/format";
 
 export default function LeadDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const { hasPerm } = useAuth();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -50,6 +52,9 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
     if (res.ok) {
       setLostReasonModal(false);
       await loadProfile();
+    } else {
+      const j = await res.json().catch(() => ({}));
+      alert(j.error || "Unable to update lead status");
     }
   };
 
@@ -64,6 +69,9 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
     if (res.ok) {
       setNote("");
       await loadProfile();
+    } else {
+      const j = await res.json().catch(() => ({}));
+      alert(j.error || "Unable to add note");
     }
   };
 
@@ -77,6 +85,9 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
     if (res.ok) {
       setFuModal(false);
       await loadProfile();
+    } else {
+      const j = await res.json().catch(() => ({}));
+      alert(j.error || "Unable to schedule follow-up");
     }
   };
 
@@ -100,21 +111,25 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
               <>
                 <StatusBadge value={data.lead.status} />
                 <StatusBadge value={data.lead.priority} />
-                <select
-                  value={data.lead.status}
-                  onChange={(e) => changeStatus(e.target.value)}
-                  className="px-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#111a2e]"
-                >
-                  {LEAD_STAGES.map((s) => (
-                    <option key={s.key} value={s.key}>Stage: {s.key}</option>
-                  ))}
-                </select>
-                <button
-                  onClick={() => setFuModal(true)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#0B5CA8] text-white"
-                >
-                  <CalendarPlus className="w-3.5 h-3.5" /> Schedule Follow-up
-                </button>
+                {hasPerm("leads:edit") && (
+                  <select
+                    value={data.lead.status}
+                    onChange={(e) => changeStatus(e.target.value)}
+                    className="px-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#111a2e]"
+                  >
+                    {LEAD_STAGES.map((s) => (
+                      <option key={s.key} value={s.key}>Stage: {s.key}</option>
+                    ))}
+                  </select>
+                )}
+                {hasPerm("followups:manage") && (
+                  <button
+                    onClick={() => setFuModal(true)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#0B5CA8] text-white"
+                  >
+                    <CalendarPlus className="w-3.5 h-3.5" /> Schedule Follow-up
+                  </button>
+                )}
               </>
             }
           />
@@ -201,7 +216,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
           </Card>
 
           {/* Tabs: Activity, Follow-ups, Documents, Transactions */}
-          <div className="flex gap-1.5 bg-white dark:bg-[#111a2e] p-1 rounded-xl border border-slate-200 dark:border-slate-800 w-fit text-xs">
+          <div className="flex overflow-x-auto no-scrollbar sm:flex-wrap gap-1.5 bg-white dark:bg-[#111a2e] p-1 rounded-xl border border-slate-200 dark:border-slate-800 w-full sm:w-fit max-w-full text-xs">
             {[
               { key: "activity", label: `Activity & Notes (${data.lead.activities.length})` },
               { key: "followups", label: `Follow-ups (${data.lead.followUps.length})` },
@@ -211,7 +226,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
               <button
                 key={t.key}
                 onClick={() => setTab(t.key as any)}
-                className={`px-3 py-1.5 rounded-lg font-semibold ${tab === t.key ? "bg-[#0B5CA8] text-white" : "text-slate-600 dark:text-slate-300"}`}
+                className={`px-3 py-1.5 rounded-lg font-semibold shrink-0 ${tab === t.key ? "bg-[#0B5CA8] text-white" : "text-slate-600 dark:text-slate-300"}`}
               >
                 {t.label}
               </button>
@@ -221,29 +236,35 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
           {tab === "activity" && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
               <Card className="lg:col-span-8 p-4">
-                <form onSubmit={addNote} className="flex gap-2 mb-4">
-                  <input
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                    placeholder="Log negotiation note, customer call outcome, or update..."
-                    className="flex-1 px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent"
-                  />
-                  <button type="submit" className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg bg-[#0B5CA8] text-white">
-                    <MessageSquarePlus className="w-3.5 h-3.5" /> Add Note
-                  </button>
-                </form>
+                {hasPerm("leads:edit") && (
+                  <form onSubmit={addNote} className="flex flex-col sm:flex-row gap-2 mb-4">
+                    <input
+                      value={note}
+                      onChange={(e) => setNote(e.target.value)}
+                      placeholder="Log negotiation note, customer call outcome, or update..."
+                      className="flex-1 px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent"
+                    />
+                    <button type="submit" className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg bg-[#0B5CA8] text-white shrink-0">
+                      <MessageSquarePlus className="w-3.5 h-3.5" /> Add Note
+                    </button>
+                  </form>
+                )}
 
                 <div className="space-y-2.5 text-xs">
-                  {data.lead.activities.map((a: any) => (
-                    <div key={a.id} className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
-                      <div className="flex justify-between">
-                        <span className="font-semibold text-[#0B5CA8]">{a.activityType}</span>
-                        <span className="text-[11px] text-slate-400">{formatDateTime(a.createdAt)}</span>
+                  {data.lead.activities.length === 0 ? (
+                    <p className="text-slate-400 py-4 text-center">No activity logged yet.</p>
+                  ) : (
+                    data.lead.activities.map((a: any) => (
+                      <div key={a.id} className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                        <div className="flex flex-wrap justify-between gap-1">
+                          <span className="font-semibold text-[#0B5CA8]">{a.activityType}</span>
+                          <span className="text-[11px] text-slate-400">{formatDateTime(a.createdAt)}</span>
+                        </div>
+                        <p className="mt-1 text-slate-800 dark:text-slate-200">{a.summary}</p>
+                        <div className="text-[10px] text-slate-400 mt-1">Performed by {a.performedBy?.fullName || "System"}</div>
                       </div>
-                      <p className="mt-1 text-slate-800 dark:text-slate-200">{a.summary}</p>
-                      <div className="text-[10px] text-slate-400 mt-1">Performed by {a.performedBy?.fullName || "System"}</div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </Card>
 
@@ -252,15 +273,19 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
                   Assignment History
                 </h3>
                 <div className="space-y-2 text-xs">
-                  {data.lead.assignments.map((as: any) => (
-                    <div key={as.id} className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60">
-                      <div className="font-semibold">
-                        {as.fromEmployee?.fullName || "Unassigned"} → {as.toEmployee.fullName}
+                  {data.lead.assignments.length === 0 ? (
+                    <p className="text-slate-400 py-4 text-center">No assignments yet.</p>
+                  ) : (
+                    data.lead.assignments.map((as: any) => (
+                      <div key={as.id} className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60">
+                        <div className="font-semibold">
+                          {as.fromEmployee?.fullName || "Unassigned"} → {as.toEmployee.fullName}
+                        </div>
+                        <div className="text-[11px] text-slate-500">{as.reason || "Assigned"}</div>
+                        <div className="text-[10px] text-slate-400">{formatDateTime(as.createdAt)}</div>
                       </div>
-                      <div className="text-[11px] text-slate-500">{as.reason || "Assigned"}</div>
-                      <div className="text-[10px] text-slate-400">{formatDateTime(as.createdAt)}</div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </Card>
             </div>
@@ -272,8 +297,8 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
                 <p className="text-slate-400 py-4 text-center">No follow-ups recorded.</p>
               ) : (
                 data.lead.followUps.map((f: any) => (
-                  <div key={f.id} className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900/60 flex justify-between items-center">
-                    <div>
+                  <div key={f.id} className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900/60 flex flex-wrap justify-between items-center gap-2">
+                    <div className="min-w-0">
                       <div className="font-semibold">{f.followUpCode} · {f.type}</div>
                       <div className="text-slate-500">{formatDate(f.followUpDate)} at {f.followUpTime} · {f.assignedEmployee.fullName}</div>
                       {f.contactResult && <div className="text-emerald-600 mt-0.5">{f.contactResult}</div>}
@@ -291,12 +316,12 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
                 <p className="text-slate-400 py-4 text-center">No vehicle documents uploaded yet.</p>
               ) : (
                 data.lead.vehicles[0].documents.map((doc: any) => (
-                  <div key={doc.id} className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900/60 flex justify-between items-center">
-                    <div className="flex items-center gap-2.5">
-                      <FileText className="w-4 h-4 text-[#0B5CA8]" />
-                      <div>
+                  <div key={doc.id} className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900/60 flex flex-wrap justify-between items-center gap-2">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <FileText className="w-4 h-4 text-[#0B5CA8] shrink-0" />
+                      <div className="min-w-0">
                         <div className="font-semibold">{doc.documentType}</div>
-                        <div className="text-[11px] text-slate-500">{doc.fileName} · {doc.verificationRemarks}</div>
+                        <div className="text-[11px] text-slate-500 break-all">{doc.fileName} · {doc.verificationRemarks}</div>
                       </div>
                     </div>
                     <StatusBadge value={doc.verificationStatus} />
@@ -310,33 +335,41 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 text-xs">
               <Card className="p-4 space-y-2">
                 <h3 className="font-semibold">Quotations ({data.lead.quotations.length})</h3>
-                {data.lead.quotations.map((q: any) => (
-                  <div key={q.id} className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900/60 flex justify-between">
-                    <div>
-                      <div className="font-semibold">{q.quotationCode} (Rev #{q.revisionNumber})</div>
-                      <div className="text-slate-500">{q.negotiationNotes}</div>
+                {data.lead.quotations.length === 0 ? (
+                  <p className="text-slate-400 py-4 text-center">No quotations recorded yet.</p>
+                ) : (
+                  data.lead.quotations.map((q: any) => (
+                    <div key={q.id} className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900/60 flex flex-wrap justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="font-semibold">{q.quotationCode} (Rev #{q.revisionNumber})</div>
+                        <div className="text-slate-500">{q.negotiationNotes || "—"}</div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="font-bold">{formatINR(q.offeredPurchasePrice)}</div>
+                        <StatusBadge value={q.customerAcceptanceStatus} />
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <div className="font-bold">{formatINR(q.offeredPurchasePrice)}</div>
-                      <StatusBadge value={q.customerAcceptanceStatus} />
-                    </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </Card>
               <Card className="p-4 space-y-2">
                 <h3 className="font-semibold">Transactions ({data.lead.transactions.length})</h3>
-                {data.lead.transactions.map((t: any) => (
-                  <div key={t.id} className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900/60 flex justify-between">
-                    <div>
-                      <div className="font-semibold">{t.transactionCode}</div>
-                      <div className="text-slate-500">{formatDate(t.transactionDate)} · {t.paymentMethod}</div>
+                {data.lead.transactions.length === 0 ? (
+                  <p className="text-slate-400 py-4 text-center">No transactions recorded yet.</p>
+                ) : (
+                  data.lead.transactions.map((t: any) => (
+                    <div key={t.id} className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900/60 flex flex-wrap justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="font-semibold">{t.transactionCode}</div>
+                        <div className="text-slate-500">{formatDate(t.transactionDate)} · {t.paymentMethod}</div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="font-bold">Purchase: {formatINR(t.vehiclePurchaseAmount)}</div>
+                        <StatusBadge value={t.paymentStatus} />
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <div className="font-bold">Purchase: {formatINR(t.vehiclePurchaseAmount)}</div>
-                      <StatusBadge value={t.paymentStatus} />
-                    </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </Card>
             </div>
           )}

@@ -23,16 +23,16 @@ export function PageHeader({
   actions?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
-      <div>
-        <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 sm:mb-5">
+      <div className="min-w-0">
+        <h1 className="text-lg sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight break-words">
           {title}
         </h1>
         {subtitle && (
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">{subtitle}</p>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">{subtitle}</p>
         )}
       </div>
-      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+      {actions && <div className="flex flex-wrap items-center gap-2 shrink-0">{actions}</div>}
     </div>
   );
 }
@@ -97,16 +97,16 @@ export function KpiCard({
   const isGood = invertGoodDirection ? !isPositive : isPositive;
 
   return (
-    <Card className="p-4 flex flex-col justify-between hover:border-[#0B5CA8]/50 transition-colors">
+    <Card className="p-3.5 sm:p-4 flex flex-col justify-between hover:border-[#0B5CA8]/50 transition-colors min-w-0">
       <div className="flex items-start justify-between gap-2">
-        <div>
-          <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{label}</p>
-          <p className="text-xl font-bold text-slate-900 dark:text-white mt-1 tabular-nums">
+        <div className="min-w-0">
+          <p className="text-[11px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 truncate">{label}</p>
+          <p className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mt-1 tabular-nums break-words">
             {formatted}
           </p>
         </div>
         {icon && (
-          <div className="w-9 h-9 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-[#0B5CA8] dark:text-blue-400 flex items-center justify-center shrink-0">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-[#0B5CA8] dark:text-blue-400 flex items-center justify-center shrink-0">
             {icon}
           </div>
         )}
@@ -270,28 +270,29 @@ export function Modal({
 }) {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-xs p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-950/60 backdrop-blur-xs p-2 sm:p-4 overflow-y-auto">
       <div
         className={cn(
-          "w-full bg-white dark:bg-[#111a2e] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl my-auto max-h-[90vh] flex flex-col",
+          "w-full bg-white dark:bg-[#111a2e] border border-slate-200 dark:border-slate-800 rounded-t-2xl sm:rounded-2xl shadow-2xl my-auto max-h-[92vh] flex flex-col max-w-full",
           maxWidth
         )}
       >
-        <div className="flex items-start justify-between gap-3 px-6 py-4 border-b border-slate-200 dark:border-slate-800">
-          <div>
-            <h3 className="text-base font-semibold text-slate-900 dark:text-white">{title}</h3>
+        <div className="flex items-start justify-between gap-3 px-4 py-3.5 sm:px-6 sm:py-4 border-b border-slate-200 dark:border-slate-800 shrink-0">
+          <div className="min-w-0">
+            <h3 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white break-words">{title}</h3>
             {subtitle && (
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{subtitle}</p>
+              <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">{subtitle}</p>
             )}
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
+            aria-label="Close modal"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 shrink-0"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
-        <div className="p-6 overflow-y-auto">{children}</div>
+        <div className="p-4 sm:p-6 overflow-y-auto">{children}</div>
       </div>
     </div>
   );

@@ -164,8 +164,47 @@ function CustomersContent() {
           {data.customers.length === 0 ? (
             <EmptyState />
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs text-left">
+            <>
+              <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+                {data.customers.map((c: any) => (
+                  <div key={c.id} className="p-3.5 space-y-2 text-xs">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-semibold text-[#0B5CA8]">{c.customerCode}</span>
+                          {c.isRepeat && (
+                            <span className="px-1.5 py-0.5 text-[10px] rounded bg-indigo-50 text-indigo-700 font-semibold">
+                              Repeat
+                            </span>
+                          )}
+                        </div>
+                        <div className="font-semibold text-sm text-slate-900 dark:text-white mt-0.5">{c.name}</div>
+                        <div className="text-[11px] text-slate-500">{c.primaryMobile}{c.email ? ` · ${c.email}` : ""}</div>
+                      </div>
+                      <StatusBadge value={c.customerType} className="shrink-0" />
+                    </div>
+                    <div className="flex items-center justify-between gap-2 text-[11px] text-slate-500">
+                      <span>{c.city}, {c.district} {c.pinCode ? `(${c.pinCode})` : ""}</span>
+                      <span>Created {formatDate(c.createdAt)}</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2 pt-1">
+                      <div className="flex gap-3 text-[11px]">
+                        <span><strong>{c.leadCount}</strong> Leads</span>
+                        <span><strong>{c.vehicleCount}</strong> Vehicles</span>
+                        <span><strong>{c.interactionCount}</strong> Logs</span>
+                      </div>
+                      <button
+                        onClick={() => openProfile(c.id)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-[#0B5CA8] hover:text-white font-medium"
+                      >
+                        <Eye className="w-3.5 h-3.5" /> History
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-xs text-left">
                 <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-500 border-b border-slate-200 dark:border-slate-800">
                   <tr>
                     <th className="p-3">Customer ID</th>
@@ -212,7 +251,8 @@ function CustomersContent() {
                   ))}
                 </tbody>
               </table>
-            </div>
+              </div>
+            </>
           )}
         </Card>
       )}
@@ -304,7 +344,7 @@ function CustomersContent() {
       {/* Add Customer Modal */}
       <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Add New Customer" maxWidth="max-w-lg">
         <form onSubmit={handleCreate} className="space-y-3 text-xs">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <input required placeholder="Full Name *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="px-3 py-2 rounded-lg border bg-transparent" />
             <input required placeholder="Primary Mobile *" value={form.primaryMobile} onChange={(e) => setForm({ ...form, primaryMobile: e.target.value })} className="px-3 py-2 rounded-lg border bg-transparent" />
             <input placeholder="Alt Mobile" value={form.altMobile} onChange={(e) => setForm({ ...form, altMobile: e.target.value })} className="px-3 py-2 rounded-lg border bg-transparent" />
@@ -335,11 +375,14 @@ function CustomersContent() {
               if (res.ok) {
                 setEditCustomer(null);
                 await loadCustomers();
+              } else {
+                const j = await res.json().catch(() => ({}));
+                alert(j.error || "Unable to update customer");
               }
             }}
             className="space-y-3 text-xs"
           >
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <input required placeholder="Full Name *" value={editCustomer.name} onChange={(e) => setEditCustomer({ ...editCustomer, name: e.target.value })} className="px-3 py-2 rounded-lg border bg-transparent" />
               <input required placeholder="Primary Mobile *" value={editCustomer.primaryMobile} onChange={(e) => setEditCustomer({ ...editCustomer, primaryMobile: e.target.value })} className="px-3 py-2 rounded-lg border bg-transparent" />
               <input placeholder="Email" value={editCustomer.email || ""} onChange={(e) => setEditCustomer({ ...editCustomer, email: e.target.value })} className="px-3 py-2 rounded-lg border bg-transparent" />

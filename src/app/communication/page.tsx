@@ -4,11 +4,13 @@ import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { AlertCircle, MessageSquare, Plus, Search } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
+import { useAuth } from "@/components/AuthContext";
 import { Card, EmptyState, ErrorState, LoadingState, Modal, PageHeader, StatusBadge } from "@/components/ui";
 import { COMMUNICATION_TYPES } from "@/lib/constants";
 import { formatDateTime } from "@/lib/format";
 
 export default function CommunicationPage() {
+  const { hasPerm } = useAuth();
   const [type, setType] = useState("All");
   const [search, setSearch] = useState("");
   const [data, setData] = useState<any>(null);
@@ -54,6 +56,9 @@ export default function CommunicationPage() {
       setModalOpen(false);
       setForm({ customerId: "", leadId: "", communicationType: COMMUNICATION_TYPES[0], direction: "Outbound", summary: "", outcome: "", nextAction: "" });
       await loadLogs();
+    } else {
+      const j = await res.json().catch(() => ({}));
+      alert(j.error || "Unable to save interaction log");
     }
   };
 
@@ -70,16 +75,18 @@ export default function CommunicationPage() {
       />
 
       {data?.whatsappStatus?.status !== "Connected" && (
-        <div className="mb-5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 px-4 py-3 text-xs text-amber-900 dark:text-amber-200 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0 text-amber-600" />
+        <div className="mb-5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 px-4 py-3 text-xs text-amber-900 dark:text-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-start sm:items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0 text-amber-600 mt-0.5 sm:mt-0" />
             <span>
               <strong>WhatsApp Business Cloud API: Not Connected.</strong> Manual interaction logging is active; automated WhatsApp acknowledgements & templates activate in Phase 4 once configured in Settings.
             </span>
           </div>
-          <Link href="/settings?tab=integrations" className="font-semibold text-[#0B5CA8] hover:underline shrink-0">
-            Integrations →
-          </Link>
+          {hasPerm("settings:manage") && (
+            <Link href="/settings?tab=integrations" className="font-semibold text-[#0B5CA8] hover:underline shrink-0">
+              Integrations →
+            </Link>
+          )}
         </div>
       )}
 
@@ -102,8 +109,30 @@ export default function CommunicationPage() {
       {!loading && data && (
         <Card className="overflow-hidden">
           {data.logs.length === 0 ? <EmptyState /> : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs text-left">
+            <>
+              <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+                {data.logs.map((l: any) => (
+                  <div key={l.id} className="p-3.5 space-y-2 text-xs">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="font-bold flex items-center gap-1.5">
+                          <MessageSquare className="w-3.5 h-3.5 text-[#0B5CA8]" />
+                          {l.commCode} · {l.communicationType}
+                        </div>
+                        <div className="font-semibold mt-0.5">{l.customer.name} ({l.customer.primaryMobile})</div>
+                      </div>
+                      <StatusBadge value={l.direction} />
+                    </div>
+                    <p className="text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/60 p-2 rounded-lg">{l.summary}</p>
+                    <div className="flex flex-wrap justify-between gap-2 text-[11px] text-slate-400">
+                      <span>{l.employee?.fullName || "System"}{l.outcome ? ` · ${l.outcome}` : ""}</span>
+                      <span>{formatDateTime(l.timestamp)}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-xs text-left">
                 <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-500 border-b">
                   <tr>
                     <th className="p-3">ID & Timestamp</th>
@@ -146,6 +175,7 @@ export default function CommunicationPage() {
                 </tbody>
               </table>
             </div>
+            </>
           )}
         </Card>
       )}
@@ -162,7 +192,7 @@ export default function CommunicationPage() {
               <option key={l.id} value={l.id}>{l.leadCode} — {l.customer.name}</option>
             ))}
           </select>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <select value={form.communicationType} onChange={(e) => setForm({ ...form, communicationType: e.target.value })} className="px-3 py-2 rounded-lg border bg-white dark:bg-slate-900">
               {COMMUNICATION_TYPES.map((ct) => <option key={ct} value={ct}>{ct}</option>)}
             </select>

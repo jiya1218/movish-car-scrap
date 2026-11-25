@@ -76,31 +76,41 @@ export default function NotificationsPage() {
           {data.notifications.length === 0 ? (
             <EmptyState title="No notifications" description="You are caught up on all operational alerts." />
           ) : (
-            data.notifications.map((n: any) => (
-              <div key={n.id} className={`p-4 flex items-start justify-between gap-4 text-xs ${!n.isRead ? "bg-blue-50/40 dark:bg-blue-950/20" : ""}`}>
-                <div className="flex items-start gap-3">
-                  <div className="mt-1">
-                    {!n.isRead ? <Circle className="w-2.5 h-2.5 fill-[#D62828] text-[#D62828]" /> : <Bell className="w-3.5 h-3.5 text-slate-400" />}
-                  </div>
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-bold text-slate-900 dark:text-white">{n.title}</span>
-                      <StatusBadge value={n.category} />
-                      <span className="text-[11px] text-slate-400">{formatDateTime(n.createdAt)}</span>
+            data.notifications.map((n: any) => {
+              const modulePath =
+                n.relatedModule === "leads" && n.relatedRecordId
+                  ? `/leads/${n.relatedRecordId}`
+                  : n.relatedModule === "followups"
+                  ? "/follow-ups"
+                  : n.relatedModule === "meta_ads"
+                  ? "/meta-ads"
+                  : `/${n.relatedModule}`;
+              return (
+                <div key={n.id} className={`p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-start justify-between gap-3 text-xs ${!n.isRead ? "bg-blue-50/40 dark:bg-blue-950/20" : ""}`}>
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div className="mt-1 shrink-0">
+                      {!n.isRead ? <Circle className="w-2.5 h-2.5 fill-[#D62828] text-[#D62828]" /> : <Bell className="w-3.5 h-3.5 text-slate-400" />}
                     </div>
-                    <p className="text-slate-600 dark:text-slate-300 mt-1">{n.description}</p>
-                    {n.relatedModule && (
-                      <Link href={`/${n.relatedModule === "leads" && n.relatedRecordId ? `leads/${n.relatedRecordId}` : n.relatedModule}`} className="inline-block mt-1.5 text-[#0B5CA8] font-semibold hover:underline">
-                        Open Related Module →
-                      </Link>
-                    )}
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-bold text-slate-900 dark:text-white">{n.title}</span>
+                        <StatusBadge value={n.category} />
+                        <span className="text-[11px] text-slate-400">{formatDateTime(n.createdAt)}</span>
+                      </div>
+                      <p className="text-slate-600 dark:text-slate-300 mt-1">{n.description}</p>
+                      {n.relatedModule && (
+                        <Link href={modulePath} className="inline-block mt-1.5 text-[#0B5CA8] font-semibold hover:underline">
+                          Open Related Module →
+                        </Link>
+                      )}
+                    </div>
                   </div>
+                  <button onClick={() => toggleRead(n)} className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 shrink-0 self-start sm:self-auto">
+                    {n.isRead ? "Mark Unread" : "Mark Read"}
+                  </button>
                 </div>
-                <button onClick={() => toggleRead(n)} className="px-2.5 py-1 rounded border border-slate-200 dark:border-slate-700 shrink-0">
-                  {n.isRead ? "Mark Unread" : "Mark Read"}
-                </button>
-              </div>
-            ))
+              );
+            })
           )}
         </Card>
       )}

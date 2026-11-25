@@ -221,18 +221,20 @@ export default function MetaAdsPage() {
               <strong>Meta Business Integration Status: Not Connected.</strong> Showing structured local campaign reporting records reconciled with CRM leads. Live Meta Marketing API synchronization is ready to activate in Settings once authorized credentials are provided.
             </span>
           </div>
-          <Link
-            href="/settings?tab=integrations"
-            className="shrink-0 font-semibold text-[#0B5CA8] hover:underline"
-          >
-            Configure Integration →
-          </Link>
+          {hasPerm("settings:manage") && (
+            <Link
+              href="/settings?tab=integrations"
+              className="shrink-0 font-semibold text-[#0B5CA8] hover:underline"
+            >
+              Configure Integration →
+            </Link>
+          )}
         </div>
       )}
 
       {/* Submodule Tabs */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-        <div className="flex flex-wrap gap-1.5 bg-white dark:bg-[#111a2e] p-1 rounded-xl border border-slate-200 dark:border-slate-800">
+        <div className="flex overflow-x-auto no-scrollbar sm:flex-wrap gap-1.5 bg-white dark:bg-[#111a2e] p-1 rounded-xl border border-slate-200 dark:border-slate-800 w-full sm:w-fit max-w-full">
           {[
             { key: "overview", label: "Overview" },
             { key: "campaigns", label: "Campaigns" },
@@ -243,7 +245,7 @@ export default function MetaAdsPage() {
             <button
               key={t.key}
               onClick={() => setTab(t.key as any)}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors shrink-0 ${
                 tab === t.key
                   ? "bg-[#0B5CA8] text-white"
                   : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
@@ -256,9 +258,9 @@ export default function MetaAdsPage() {
       </div>
 
       {/* Filters Bar */}
-      <Card className="p-3.5 mb-5">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 text-xs">
-          <div className="relative col-span-2 sm:col-span-1">
+      <Card className="p-3 sm:p-3.5 mb-5">
+        <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 text-xs">
+          <div className="relative sm:col-span-3 lg:col-span-1">
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
             <input
               value={search}
@@ -378,8 +380,43 @@ export default function MetaAdsPage() {
               {filteredCampaigns.length === 0 ? (
                 <EmptyState />
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs text-left">
+                <>
+                  <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+                    {filteredCampaigns.map((c: any) => (
+                      <div key={c.id} className="p-3.5 space-y-2 text-xs">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-start gap-2 min-w-0">
+                            <input
+                              type="checkbox"
+                              checked={compareCampaignIds.includes(c.id)}
+                              onChange={() => toggleCompareCampaign(c.id)}
+                              aria-label={`Compare ${c.name}`}
+                              className="mt-1 shrink-0"
+                            />
+                            <div className="min-w-0">
+                              <Link href={`/meta-ads/campaigns/${c.id}`} className="font-semibold text-[#0B5CA8] hover:underline block truncate">
+                                {c.name}
+                              </Link>
+                              <div className="text-[11px] text-slate-400">{c.campaignCode} · {c.platform}</div>
+                            </div>
+                          </div>
+                          <StatusBadge value={c.status} className="shrink-0" />
+                        </div>
+                        <div className="grid grid-cols-3 gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-900/60 text-[11px] tabular-nums">
+                          <div><span className="text-slate-400 block">Spent</span><strong>{formatINR(c.spend)}</strong></div>
+                          <div><span className="text-slate-400 block">Leads / CPL</span><strong className="text-[#0B5CA8]">{c.leads} ({formatINR(c.cpl)})</strong></div>
+                          <div><span className="text-slate-400 block">Qual / ROI</span><strong className="text-emerald-600">{c.qualifiedLeads} / {formatPercent(c.marketingRoi, 0)}</strong></div>
+                        </div>
+                        <div className="flex justify-end">
+                          <Link href={`/meta-ads/campaigns/${c.id}`} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 font-medium">
+                            Open Detail <ExternalLink className="w-3 h-3" />
+                          </Link>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full text-xs text-left">
                     <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-500 border-b border-slate-200 dark:border-slate-800">
                       <tr>
                         <th className="p-3">Cmp</th>
@@ -460,59 +497,85 @@ export default function MetaAdsPage() {
                       ))}
                     </tbody>
                   </table>
-                </div>
+                  </div>
+                </>
               )}
             </Card>
           )}
 
           {tab === "adsets" && (
             <Card className="overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs text-left">
-                  <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-500 border-b border-slate-200 dark:border-slate-800">
-                    <tr>
-                      <th className="p-3">Ad Set</th>
-                      <th className="p-3">Parent Campaign</th>
-                      <th className="p-3">Audience & Placement</th>
-                      <th className="p-3">Status</th>
-                      <th className="p-3 text-right">Budget</th>
-                      <th className="p-3 text-right">Spent</th>
-                      <th className="p-3 text-right">Impressions / Reach</th>
-                      <th className="p-3 text-right">Clicks</th>
-                      <th className="p-3 text-right">Leads</th>
-                      <th className="p-3 text-right">CPL</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              {data.adSets.length === 0 ? (
+                <EmptyState title="No ad sets configured yet" description="Create an ad set under an active campaign to track placement performance." />
+              ) : (
+                <>
+                  <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
                     {data.adSets.map((as: any) => (
-                      <tr key={as.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
-                        <td className="p-3">
-                          <div className="font-semibold">{as.name}</div>
-                          <div className="text-[11px] text-slate-400">{as.adSetCode} · {as.metaAdSetId}</div>
-                        </td>
-                        <td className="p-3">{as.campaignName}</td>
-                        <td className="p-3">
-                          <div>{as.placement}</div>
-                          <div className="text-[11px] text-slate-400">{as.audienceInfo}</div>
-                        </td>
-                        <td className="p-3"><StatusBadge value={as.status} /></td>
-                        <td className="p-3 text-right tabular-nums">{formatINR(as.budget)}</td>
-                        <td className="p-3 text-right font-semibold tabular-nums">{formatINR(as.spend)}</td>
-                        <td className="p-3 text-right tabular-nums">{formatNumber(as.impressions)} / {formatNumber(as.reach)}</td>
-                        <td className="p-3 text-right tabular-nums">{formatNumber(as.selectedClicks)}</td>
-                        <td className="p-3 text-right font-bold text-[#0B5CA8] tabular-nums">{as.leads}</td>
-                        <td className="p-3 text-right tabular-nums">{formatINR(as.cpl)}</td>
-                      </tr>
+                      <div key={as.id} className="p-3.5 space-y-1.5 text-xs">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="font-semibold truncate">{as.name}</div>
+                            <div className="text-[11px] text-slate-400">{as.adSetCode} · {as.campaignName}</div>
+                          </div>
+                          <StatusBadge value={as.status} className="shrink-0" />
+                        </div>
+                        <div className="text-[11px] text-slate-500">{as.placement} · {as.audienceInfo}</div>
+                        <div className="grid grid-cols-3 gap-2 pt-1 text-[11px] tabular-nums">
+                          <div><span className="text-slate-400 block">Spent</span><strong>{formatINR(as.spend)}</strong></div>
+                          <div><span className="text-slate-400 block">Leads</span><strong className="text-[#0B5CA8]">{as.leads}</strong></div>
+                          <div><span className="text-slate-400 block">CPL</span><strong>{formatINR(as.cpl)}</strong></div>
+                        </div>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
-              </div>
+                  </div>
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full text-xs text-left">
+                      <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-500 border-b border-slate-200 dark:border-slate-800">
+                        <tr>
+                          <th className="p-3">Ad Set</th>
+                          <th className="p-3">Parent Campaign</th>
+                          <th className="p-3">Audience & Placement</th>
+                          <th className="p-3">Status</th>
+                          <th className="p-3 text-right">Budget</th>
+                          <th className="p-3 text-right">Spent</th>
+                          <th className="p-3 text-right">Impressions / Reach</th>
+                          <th className="p-3 text-right">Clicks</th>
+                          <th className="p-3 text-right">Leads</th>
+                          <th className="p-3 text-right">CPL</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                        {data.adSets.map((as: any) => (
+                          <tr key={as.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
+                            <td className="p-3">
+                              <div className="font-semibold">{as.name}</div>
+                              <div className="text-[11px] text-slate-400">{as.adSetCode} · {as.metaAdSetId}</div>
+                            </td>
+                            <td className="p-3">{as.campaignName}</td>
+                            <td className="p-3">
+                              <div>{as.placement}</div>
+                              <div className="text-[11px] text-slate-400">{as.audienceInfo}</div>
+                            </td>
+                            <td className="p-3"><StatusBadge value={as.status} /></td>
+                            <td className="p-3 text-right tabular-nums">{formatINR(as.budget)}</td>
+                            <td className="p-3 text-right font-semibold tabular-nums">{formatINR(as.spend)}</td>
+                            <td className="p-3 text-right tabular-nums">{formatNumber(as.impressions)} / {formatNumber(as.reach)}</td>
+                            <td className="p-3 text-right tabular-nums">{formatNumber(as.selectedClicks)}</td>
+                            <td className="p-3 text-right font-bold text-[#0B5CA8] tabular-nums">{as.leads}</td>
+                            <td className="p-3 text-right tabular-nums">{formatINR(as.cpl)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
             </Card>
           )}
 
           {tab === "ads" && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="text-xs text-slate-500">
                   <strong>{filteredAds.length}</strong> advertisements · Select up to 4 ads to compare creative & lead efficiency
                 </p>
@@ -526,60 +589,64 @@ export default function MetaAdsPage() {
                 )}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {filteredAds.map((ad: any) => (
-                  <Card key={ad.id} className="p-4 flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            checked={compareAdIds.includes(ad.id)}
-                            onChange={() => toggleCompareAd(ad.id)}
-                          />
-                          <div>
-                            <h3 className="text-xs font-bold text-slate-900 dark:text-white">{ad.name}</h3>
-                            <p className="text-[11px] text-slate-400">{ad.adCode} · {ad.platform} ({ad.placement})</p>
+              {filteredAds.length === 0 ? (
+                <Card><EmptyState title="No advertisements found" description="Create an advertisement under an ad set or adjust your filters." /></Card>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {filteredAds.map((ad: any) => (
+                    <Card key={ad.id} className="p-4 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <input
+                              type="checkbox"
+                              checked={compareAdIds.includes(ad.id)}
+                              onChange={() => toggleCompareAd(ad.id)}
+                            />
+                            <div className="min-w-0">
+                              <h3 className="text-xs font-bold text-slate-900 dark:text-white truncate">{ad.name}</h3>
+                              <p className="text-[11px] text-slate-400 truncate">{ad.adCode} · {ad.platform} ({ad.placement})</p>
+                            </div>
+                          </div>
+                          <StatusBadge value={ad.status} className="shrink-0" />
+                        </div>
+
+                        <div className="rounded-lg bg-slate-50 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 p-3 my-2.5 flex gap-3">
+                          <div className="w-12 h-12 rounded bg-white border border-slate-200 flex items-center justify-center shrink-0 p-1">
+                            <img src={ad.creativePreviewUrl || "/logo.png"} alt={ad.headline} className="w-full h-full object-contain" />
+                          </div>
+                          <div className="min-w-0 text-xs">
+                            <div className="font-semibold text-slate-900 dark:text-white truncate">{ad.headline}</div>
+                            <p className="text-[11px] text-slate-500 line-clamp-2 mt-0.5">{ad.primaryText}</p>
+                            <span className="inline-block mt-1 px-2 py-0.5 text-[10px] font-semibold rounded bg-blue-50 text-[#0B5CA8]">
+                              CTA: {ad.cta}
+                            </span>
                           </div>
                         </div>
-                        <StatusBadge value={ad.status} />
                       </div>
 
-                      <div className="rounded-lg bg-slate-50 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 p-3 my-2.5 flex gap-3">
-                        <div className="w-12 h-12 rounded bg-white border border-slate-200 flex items-center justify-center shrink-0 p-1">
-                          <img src={ad.creativePreviewUrl || "/logo.png"} alt={ad.headline} className="w-full h-full object-contain" />
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-3 border-t border-slate-100 dark:border-slate-800 text-center text-[11px]">
+                        <div>
+                          <div className="text-slate-400">Spend</div>
+                          <div className="font-semibold">{formatINR(ad.spend)}</div>
                         </div>
-                        <div className="min-w-0 text-xs">
-                          <div className="font-semibold text-slate-900 dark:text-white truncate">{ad.headline}</div>
-                          <p className="text-[11px] text-slate-500 line-clamp-2 mt-0.5">{ad.primaryText}</p>
-                          <span className="inline-block mt-1 px-2 py-0.5 text-[10px] font-semibold rounded bg-blue-50 text-[#0B5CA8]">
-                            CTA: {ad.cta}
-                          </span>
+                        <div>
+                          <div className="text-slate-400">CTR</div>
+                          <div className="font-semibold">{formatPercent(ad.ctr)}</div>
+                        </div>
+                        <div>
+                          <div className="text-slate-400">Leads / Qual.</div>
+                          <div className="font-bold text-[#0B5CA8]">{ad.leads} / {ad.qualifiedLeads}</div>
+                        </div>
+                        <div>
+                          <div className="text-slate-400">CPL</div>
+                          <div className="font-semibold">{formatINR(ad.cpl)}</div>
                         </div>
                       </div>
-                    </div>
-
-                    <div className="grid grid-cols-4 gap-2 pt-3 border-t border-slate-100 dark:border-slate-800 text-center text-[11px]">
-                      <div>
-                        <div className="text-slate-400">Spend</div>
-                        <div className="font-semibold">{formatINR(ad.spend)}</div>
-                      </div>
-                      <div>
-                        <div className="text-slate-400">CTR</div>
-                        <div className="font-semibold">{formatPercent(ad.ctr)}</div>
-                      </div>
-                      <div>
-                        <div className="text-slate-400">Leads / Qual.</div>
-                        <div className="font-bold text-[#0B5CA8]">{ad.leads} / {ad.qualifiedLeads}</div>
-                      </div>
-                      <div>
-                        <div className="text-slate-400">CPL</div>
-                        <div className="font-semibold">{formatINR(ad.cpl)}</div>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -590,7 +657,8 @@ export default function MetaAdsPage() {
                   <h3 className="text-sm font-semibold">Facebook vs Instagram Performance</h3>
                   <p className="text-xs text-slate-500">Side-by-side advertising & lead cost comparison</p>
                 </div>
-                <table className="w-full text-xs text-left">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs text-left">
                   <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-500 border-b border-slate-200 dark:border-slate-800">
                     <tr>
                       <th className="p-3">Metric</th>
@@ -618,6 +686,7 @@ export default function MetaAdsPage() {
                     ))}
                   </tbody>
                 </table>
+                </div>
               </Card>
 
               <Card className="lg:col-span-6 p-5">
@@ -743,7 +812,7 @@ export default function MetaAdsPage() {
       <Modal open={createMode === "campaign"} onClose={() => setCreateMode(null)} title="Create Advertising Campaign" maxWidth="max-w-md">
         <form onSubmit={(e) => { e.preventDefault(); submitMetaCreate("create_campaign", cmpForm); }} className="space-y-3 text-xs">
           <input required placeholder="Campaign Name *" value={cmpForm.name} onChange={(e) => setCmpForm({ ...cmpForm, name: e.target.value })} className="w-full px-3 py-2 rounded-lg border bg-transparent" />
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <select value={cmpForm.objective} onChange={(e) => setCmpForm({ ...cmpForm, objective: e.target.value })} className="px-3 py-2 rounded-lg border bg-white dark:bg-slate-900">
               <option value="Lead Generation">Lead Generation</option>
               <option value="Conversions">Conversions</option>
@@ -756,7 +825,7 @@ export default function MetaAdsPage() {
               <option value="Facebook & Instagram">Facebook & Instagram</option>
             </select>
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <input type="number" required placeholder="Budget (₹)" value={cmpForm.budget} onChange={(e) => setCmpForm({ ...cmpForm, budget: e.target.value })} className="px-3 py-2 rounded-lg border bg-transparent" />
             <select value={cmpForm.status} onChange={(e) => setCmpForm({ ...cmpForm, status: e.target.value })} className="px-3 py-2 rounded-lg border bg-white dark:bg-slate-900">
               <option value="Active">Active</option>
@@ -778,7 +847,7 @@ export default function MetaAdsPage() {
           </select>
           <input required placeholder="Ad Set Name *" value={adSetForm.name} onChange={(e) => setAdSetForm({ ...adSetForm, name: e.target.value })} className="w-full px-3 py-2 rounded-lg border bg-transparent" />
           <input placeholder="Audience Targeting" value={adSetForm.audienceInfo} onChange={(e) => setAdSetForm({ ...adSetForm, audienceInfo: e.target.value })} className="w-full px-3 py-2 rounded-lg border bg-transparent" />
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <input placeholder="Placement" value={adSetForm.placement} onChange={(e) => setAdSetForm({ ...adSetForm, placement: e.target.value })} className="px-3 py-2 rounded-lg border bg-transparent" />
             <input type="number" placeholder="Budget (₹)" value={adSetForm.budget} onChange={(e) => setAdSetForm({ ...adSetForm, budget: e.target.value })} className="px-3 py-2 rounded-lg border bg-transparent" />
           </div>
@@ -804,7 +873,7 @@ export default function MetaAdsPage() {
           <input required placeholder="Advertisement Name *" value={adForm.name} onChange={(e) => setAdForm({ ...adForm, name: e.target.value })} className="w-full px-3 py-2 rounded-lg border bg-transparent" />
           <input placeholder="Headline" value={adForm.headline} onChange={(e) => setAdForm({ ...adForm, headline: e.target.value })} className="w-full px-3 py-2 rounded-lg border bg-transparent" />
           <textarea placeholder="Primary Text" value={adForm.primaryText} onChange={(e) => setAdForm({ ...adForm, primaryText: e.target.value })} rows={2} className="w-full px-3 py-2 rounded-lg border bg-transparent" />
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <select value={adForm.platform} onChange={(e) => setAdForm({ ...adForm, platform: e.target.value })} className="px-3 py-2 rounded-lg border bg-white dark:bg-slate-900">
               <option value="Facebook">Facebook</option>
               <option value="Instagram">Instagram</option>
@@ -824,7 +893,7 @@ export default function MetaAdsPage() {
             <option value="">Select Advertisement...</option>
             {(data?.ads || []).map((a: any) => <option key={a.id} value={a.id}>{a.adCode} — {a.name} ({a.platform})</option>)}
           </select>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <input type="date" required value={metricForm.date} onChange={(e) => setMetricForm({ ...metricForm, date: e.target.value })} className="px-3 py-2 rounded-lg border bg-transparent" />
             <input type="number" required placeholder="Spend (₹)" value={metricForm.spend} onChange={(e) => setMetricForm({ ...metricForm, spend: e.target.value })} className="px-3 py-2 rounded-lg border bg-transparent" />
             <input type="number" required placeholder="Impressions" value={metricForm.impressions} onChange={(e) => setMetricForm({ ...metricForm, impressions: e.target.value })} className="px-3 py-2 rounded-lg border bg-transparent" />

@@ -11,47 +11,57 @@ export async function GET(req: Request) {
     const q = (searchParams.get("q") || "").trim();
     if (q.length < 2) return NextResponse.json({ results: [] });
 
-    const canViewFinance = canPerform(session, "finance:view");
-    const canViewAds = canPerform(session, "meta_ads:view");
+    const canViewFinance = canPerform(session, "finance:view") && session.allowedModules.includes("transactions");
+    const canViewAds = canPerform(session, "meta_ads:view") && session.allowedModules.includes("meta_ads");
+    const canViewLeads = canPerform(session, "leads:view") && session.allowedModules.includes("leads");
+    const canViewCustomers = session.allowedModules.includes("customers");
+    const canViewVehicles = canPerform(session, "vehicles:view") && session.allowedModules.includes("vehicles");
+    const canViewTeam = canPerform(session, "team:view") && session.allowedModules.includes("team");
     const viewAllLeads = canPerform(session, "leads:view_all");
 
     const [leads, customers, vehicles, campaigns, transactions, employees] = await Promise.all([
-      prisma.lead.findMany({
-        where: {
-          isDeleted: false,
-          ...(!viewAllLeads && session.employeeId ? { assignedEmployeeId: session.employeeId } : {}),
-          OR: [
-            { leadCode: { contains: q } },
-            { customer: { name: { contains: q } } },
-            { customer: { primaryMobile: { contains: q } } },
-          ],
-        },
-        include: { customer: { select: { name: true, primaryMobile: true, city: true } } },
-        take: 5,
-      }),
-      prisma.customer.findMany({
-        where: {
-          OR: [
-            { name: { contains: q } },
-            { primaryMobile: { contains: q } },
-            { customerCode: { contains: q } },
-            { city: { contains: q } },
-            { district: { contains: q } },
-          ],
-        },
-        take: 4,
-      }),
-      prisma.vehicle.findMany({
-        where: {
-          OR: [
-            { registrationNumber: { contains: q } },
-            { model: { contains: q } },
-            { manufacturer: { contains: q } },
-            { vehicleCode: { contains: q } },
-          ],
-        },
-        take: 4,
-      }),
+      canViewLeads
+        ? prisma.lead.findMany({
+            where: {
+              isDeleted: false,
+              ...(!viewAllLeads && session.employeeId ? { assignedEmployeeId: session.employeeId } : {}),
+              OR: [
+                { leadCode: { contains: q } },
+                { customer: { name: { contains: q } } },
+                { customer: { primaryMobile: { contains: q } } },
+              ],
+            },
+            include: { customer: { select: { name: true, primaryMobile: true, city: true } } },
+            take: 5,
+          })
+        : Promise.resolve([]),
+      canViewCustomers
+        ? prisma.customer.findMany({
+            where: {
+              OR: [
+                { name: { contains: q } },
+                { primaryMobile: { contains: q } },
+                { customerCode: { contains: q } },
+                { city: { contains: q } },
+                { district: { contains: q } },
+              ],
+            },
+            take: 4,
+          })
+        : Promise.resolve([]),
+      canViewVehicles
+        ? prisma.vehicle.findMany({
+            where: {
+              OR: [
+                { registrationNumber: { contains: q } },
+                { model: { contains: q } },
+                { manufacturer: { contains: q } },
+                { vehicleCode: { contains: q } },
+              ],
+            },
+            take: 4,
+          })
+        : Promise.resolve([]),
       canViewAds
         ? prisma.campaign.findMany({
             where: { OR: [{ name: { contains: q } }, { campaignCode: { contains: q } }] },
@@ -65,10 +75,12 @@ export async function GET(req: Request) {
             take: 4,
           })
         : Promise.resolve([]),
-      prisma.employee.findMany({
-        where: { OR: [{ fullName: { contains: q } }, { employeeCode: { contains: q } }] },
-        take: 4,
-      }),
+      canViewTeam
+        ? prisma.employee.findMany({
+            where: { OR: [{ fullName: { contains: q } }, { employeeCode: { contains: q } }] },
+            take: 4,
+          })
+        : Promise.resolve([]),
     ]);
 
     const results = [
