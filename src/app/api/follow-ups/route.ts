@@ -117,6 +117,13 @@ export async function GET(req: Request) {
     return NextResponse.json({
       followUps: filtered,
       leadsWithoutFollowup,
+      allActiveLeads: activeLeads.map((l) => ({
+        id: l.id,
+        leadCode: l.leadCode,
+        status: l.status,
+        customerName: l.customer.name,
+        assignedEmployeeId: l.assignedEmployee?.id ?? null,
+      })),
       metrics: {
         total: totalFu,
         today: todayFu,

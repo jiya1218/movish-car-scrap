@@ -25,6 +25,7 @@ function CustomersContent() {
 
   const [selectedProfile, setSelectedProfile] = useState<any>(null);
   const [createOpen, setCreateOpen] = useState(false);
+  const [editCustomer, setEditCustomer] = useState<any>(null);
   const [form, setForm] = useState({
     name: "",
     primaryMobile: "",
@@ -226,6 +227,19 @@ function CustomersContent() {
       >
         {selectedProfile && (
           <div className="space-y-4 text-xs">
+            {hasPerm("customers:manage") && (
+              <div className="flex justify-end">
+                <button
+                  onClick={() => {
+                    setEditCustomer({ ...selectedProfile });
+                    setSelectedProfile(null);
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-[#0B5CA8] text-white font-semibold"
+                >
+                  Edit Customer Details
+                </button>
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900/70">
                 <div className="font-bold mb-1.5">Associated Leads ({selectedProfile.leads.length})</div>
@@ -306,6 +320,38 @@ function CustomersContent() {
             <button type="submit" className="px-4 py-2 rounded-lg bg-[#0B5CA8] text-white font-semibold">Save Customer</button>
           </div>
         </form>
+      </Modal>
+
+      <Modal open={Boolean(editCustomer)} onClose={() => setEditCustomer(null)} title={`Edit ${editCustomer?.customerCode || ""}`} maxWidth="max-w-lg">
+        {editCustomer && (
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              const res = await fetch(`/api/customers/${editCustomer.id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(editCustomer),
+              });
+              if (res.ok) {
+                setEditCustomer(null);
+                await loadCustomers();
+              }
+            }}
+            className="space-y-3 text-xs"
+          >
+            <div className="grid grid-cols-2 gap-3">
+              <input required placeholder="Full Name *" value={editCustomer.name} onChange={(e) => setEditCustomer({ ...editCustomer, name: e.target.value })} className="px-3 py-2 rounded-lg border bg-transparent" />
+              <input required placeholder="Primary Mobile *" value={editCustomer.primaryMobile} onChange={(e) => setEditCustomer({ ...editCustomer, primaryMobile: e.target.value })} className="px-3 py-2 rounded-lg border bg-transparent" />
+              <input placeholder="Email" value={editCustomer.email || ""} onChange={(e) => setEditCustomer({ ...editCustomer, email: e.target.value })} className="px-3 py-2 rounded-lg border bg-transparent" />
+              <input placeholder="City" value={editCustomer.city || ""} onChange={(e) => setEditCustomer({ ...editCustomer, city: e.target.value })} className="px-3 py-2 rounded-lg border bg-transparent" />
+            </div>
+            <input placeholder="Full Address" value={editCustomer.fullAddress || ""} onChange={(e) => setEditCustomer({ ...editCustomer, fullAddress: e.target.value })} className="w-full px-3 py-2 rounded-lg border bg-transparent" />
+            <div className="flex justify-end gap-2 pt-2">
+              <button type="button" onClick={() => setEditCustomer(null)} className="px-4 py-2 rounded-lg border">Cancel</button>
+              <button type="submit" className="px-4 py-2 rounded-lg bg-[#0B5CA8] text-white font-semibold">Update Customer</button>
+            </div>
+          </form>
+        )}
       </Modal>
     </AppShell>
   );

@@ -24,7 +24,7 @@ function TransactionsContent() {
   const [modal, setModal] = useState<"transaction" | "expense" | "revenue" | "payment" | null>(null);
   const [selectedTxn, setSelectedTxn] = useState<any>(null);
   const [txnForm, setTxnForm] = useState({ vehicleId: "", vehiclePurchaseAmount: "", paymentStatus: "Pending", paymentMethod: "NEFT / IMPS", remarks: "" });
-  const [expForm, setExpForm] = useState({ category: EXPENSE_CATEGORIES[1] as string, amount: "", vehicleId: "", paymentMethod: "Bank Transfer", includedInPurchaseCost: false, notes: "" });
+  const [expForm, setExpForm] = useState({ category: EXPENSE_CATEGORIES[1] as string, amount: "", vehicleId: "", transactionId: "", paymentMethod: "Bank Transfer", includedInPurchaseCost: false, notes: "" });
   const [revForm, setRevForm] = useState({ source: REVENUE_SOURCES[1] as string, amount: "", vehicleId: "", transactionId: "", buyer: "", paymentStatus: "Paid", notes: "" });
   const [payForm, setPayForm] = useState({ paymentStatus: "Paid", paymentReference: "", notes: "" });
 
@@ -343,6 +343,10 @@ function TransactionsContent() {
             <option value="">General Business Expense (No Vehicle)</option>
             {(data?.options?.vehicles || []).map((v: any) => <option key={v.id} value={v.id}>{v.registrationNumber} — {v.model}</option>)}
           </select>
+          <select value={expForm.transactionId} onChange={(e) => setExpForm({ ...expForm, transactionId: e.target.value })} className="w-full px-3 py-2 rounded-lg border bg-white dark:bg-slate-900">
+            <option value="">Link Transaction (Optional)</option>
+            {(data?.transactions || []).map((t: any) => <option key={t.id} value={t.id}>{t.transactionCode} — {t.vehicle.registrationNumber}</option>)}
+          </select>
           <label className="flex items-center gap-2 text-[11px] text-slate-600 dark:text-slate-300">
             <input type="checkbox" checked={expForm.includedInPurchaseCost} onChange={(e) => setExpForm({ ...expForm, includedInPurchaseCost: e.target.checked })} />
             Already included in vehicle purchase cost (prevents double-counting)
@@ -364,6 +368,10 @@ function TransactionsContent() {
           <select value={revForm.vehicleId} onChange={(e) => setRevForm({ ...revForm, vehicleId: e.target.value })} className="w-full px-3 py-2 rounded-lg border bg-white dark:bg-slate-900">
             <option value="">Link Vehicle (Optional)</option>
             {(data?.options?.vehicles || []).map((v: any) => <option key={v.id} value={v.id}>{v.registrationNumber} — {v.model}</option>)}
+          </select>
+          <select value={revForm.transactionId} onChange={(e) => setRevForm({ ...revForm, transactionId: e.target.value })} className="w-full px-3 py-2 rounded-lg border bg-white dark:bg-slate-900">
+            <option value="">Link Transaction (Marks Completed)</option>
+            {(data?.transactions || []).map((t: any) => <option key={t.id} value={t.id}>{t.transactionCode} — {t.vehicle.registrationNumber}</option>)}
           </select>
           <input placeholder="Buyer / Mill / Parts Dealer Name" value={revForm.buyer} onChange={(e) => setRevForm({ ...revForm, buyer: e.target.value })} className="w-full px-3 py-2 rounded-lg border bg-transparent" />
           <div className="flex justify-end gap-2">

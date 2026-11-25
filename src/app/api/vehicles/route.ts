@@ -189,6 +189,10 @@ export async function POST(req: Request) {
       const existingQuotes = await prisma.quotation.count({ where: { vehicleId: vehicle.id } });
       const totalQuotes = await prisma.quotation.count();
       const autoApprove = canPerform(session, "quotations:approve");
+      const preparerId =
+        session.employeeId ||
+        (await prisma.employee.findFirst({ where: { accountStatus: "Active" }, select: { id: true } }))?.id;
+      if (!preparerId) return NextResponse.json({ error: "No active employee found to prepare quotation." }, { status: 400 });
 
       const quotation = await prisma.quotation.create({
         data: {
@@ -199,9 +203,9 @@ export async function POST(req: Request) {
           revisionNumber: existingQuotes + 1,
           offeredPurchasePrice: Number(body.offeredPurchasePrice),
           validityDate: new Date(body.validityDate || Date.now() + 14 * 86400000),
-          preparedById: session.employeeId!,
+          preparedById: preparerId,
           approvalStatus: autoApprove ? "Approved" : "Pending Approval",
-          approvedById: autoApprove ? session.employeeId : null,
+          approvedById: autoApprove ? preparerId : null,
           customerAcceptanceStatus: "Pending",
           negotiationNotes: body.negotiationNotes || null,
         },

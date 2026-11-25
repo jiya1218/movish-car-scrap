@@ -12,20 +12,30 @@ import type { RoleCode } from "@/lib/constants";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const email = String(body.email ?? "").trim().toLowerCase();
+    const rawIdentifier = String(body.identifier ?? body.email ?? "").trim().toLowerCase();
     const password = String(body.password ?? "");
 
-    if (!email || !password) {
-      return NextResponse.json({ error: "Email and password are required." }, { status: 400 });
+    if (!rawIdentifier || !password) {
+      return NextResponse.json({ error: "Username/email and password are required." }, { status: 400 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email },
-      include: { role: true },
-    });
+    const user = rawIdentifier.includes("@")
+      ? await prisma.user.findUnique({
+          where: { email: rawIdentifier },
+          include: { role: true },
+        })
+      : await prisma.user.findFirst({
+          where: {
+            OR: [
+              { email: { startsWith: `${rawIdentifier}@` } },
+              { name: rawIdentifier },
+            ],
+          },
+          include: { role: true },
+        });
 
     if (!user || !user.isActive || !verifyPassword(password, user.passwordHash)) {
-      return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
+      return NextResponse.json({ error: "Invalid username/email or password." }, { status: 401 });
     }
 
     await prisma.user.update({

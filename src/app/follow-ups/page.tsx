@@ -280,8 +280,8 @@ function FollowUpsContent() {
             className="w-full px-3 py-2 rounded-lg border bg-white dark:bg-slate-900"
           >
             <option value="">Select Lead...</option>
-            {(data?.leadsWithoutFollowup || []).concat((data?.followUps || []).map((f: any) => f.lead)).filter((v: any, idx: number, arr: any[]) => v?.id && arr.findIndex((x: any) => x?.id === v.id) === idx).map((l: any) => (
-              <option key={l.id} value={l.id}>{l.leadCode} ({l.status})</option>
+            {(data?.allActiveLeads || []).map((l: any) => (
+              <option key={l.id} value={l.id}>{l.leadCode} — {l.customerName} ({l.status})</option>
             ))}
           </select>
           <select value={createForm.assignedEmployeeId} onChange={(e) => setCreateForm({ ...createForm, assignedEmployeeId: e.target.value })} className="w-full px-3 py-2 rounded-lg border bg-white dark:bg-slate-900">

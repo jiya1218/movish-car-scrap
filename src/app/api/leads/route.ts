@@ -184,9 +184,11 @@ export async function GET(req: Request) {
     const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
 
     // Reference lists for dropdowns & Lost reason summary
-    const [leadSources, allCampaigns, employees] = await Promise.all([
+    const [leadSources, allCampaigns, adSets, ads, employees] = await Promise.all([
       prisma.leadSource.findMany({ where: { isActive: true }, orderBy: { sortOrder: "asc" } }),
       prisma.campaign.findMany({ select: { id: true, name: true, campaignCode: true }, orderBy: { campaignCode: "asc" } }),
+      prisma.adSet.findMany({ select: { id: true, name: true, campaignId: true }, orderBy: { adSetCode: "asc" } }),
+      prisma.ad.findMany({ select: { id: true, name: true, campaignId: true, adSetId: true }, orderBy: { adCode: "asc" } }),
       prisma.employee.findMany({
         where: { accountStatus: "Active" },
         select: { id: true, fullName: true, assignedCity: true, assignedDistrict: true, role: { select: { code: true } } },
@@ -215,7 +217,7 @@ export async function GET(req: Request) {
           .map(([reason, count]) => ({ reason, count }))
           .sort((a, b) => b.count - a.count),
       },
-      options: { leadSources, campaigns: allCampaigns, employees },
+      options: { leadSources, campaigns: allCampaigns, adSets, ads, employees },
     });
   } catch (err) {
     console.error("Leads GET error:", err);

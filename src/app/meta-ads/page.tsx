@@ -12,6 +12,7 @@ import {
   IndianRupee,
   Megaphone,
   MousePointerClick,
+  Plus,
   RefreshCw,
   Search,
   Users,
@@ -27,6 +28,7 @@ import {
   YAxis,
 } from "recharts";
 import { AppShell } from "@/components/AppShell";
+import { useAuth } from "@/components/AuthContext";
 import {
   Card,
   EmptyState,
@@ -41,6 +43,7 @@ import { exportToCSV, exportToExcel, exportToPDF } from "@/lib/export";
 import { formatINR, formatNumber, formatPercent } from "@/lib/format";
 
 export default function MetaAdsPage() {
+  const { hasPerm } = useAuth();
   const [tab, setTab] = useState<"overview" | "campaigns" | "adsets" | "ads" | "comparison">("overview");
   const [days, setDays] = useState("60");
   const [platform, setPlatform] = useState("All");
@@ -59,6 +62,26 @@ export default function MetaAdsPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [createMode, setCreateMode] = useState<"campaign" | "adset" | "ad" | "metric" | null>(null);
+  const [cmpForm, setCmpForm] = useState({ name: "", objective: "Lead Generation", platform: "Facebook", budget: "50000", status: "Active" });
+  const [adSetForm, setAdSetForm] = useState({ campaignId: "", name: "", audienceInfo: "Gujarat Car Owners 30-55", placement: "Facebook Feed", budget: "25000" });
+  const [adForm, setAdForm] = useState({ campaignId: "", adSetId: "", name: "", headline: "Sell Scrap Car at Best Rate in Gujarat", primaryText: "Instant cash quote & free doorstep pickup across Gujarat with legal scrapping certificate.", cta: "Get Quote", platform: "Facebook", placement: "Facebook Feed" });
+  const [metricForm, setMetricForm] = useState({ adId: "", date: new Date().toISOString().slice(0, 10), spend: "1200", impressions: "4500", reach: "3200", linkClicks: "95", allClicks: "120", landingPageViews: "70", metaLeads: "4" });
+
+  const submitMetaCreate = async (action: string, payload: Record<string, unknown>) => {
+    const res = await fetch("/api/meta-ads", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action, ...payload }),
+    });
+    if (res.ok) {
+      setCreateMode(null);
+      await loadData();
+    } else {
+      const j = await res.json();
+      alert(j.error || "Failed to save Meta Ads record");
+    }
+  };
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -154,6 +177,22 @@ export default function MetaAdsPage() {
         subtitle="Facebook & Instagram advertising spend, CTR/CPC/CPM/CPL/Frequency connected directly to Movish Group CRM outcomes"
         actions={
           <>
+            {hasPerm("meta_ads:manage") && (
+              <>
+                <button onClick={() => setCreateMode("campaign")} className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#0B5CA8] text-white">
+                  <Plus className="w-3.5 h-3.5" /> Campaign
+                </button>
+                <button onClick={() => setCreateMode("adset")} className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#111a2e]">
+                  + Ad Set
+                </button>
+                <button onClick={() => setCreateMode("ad")} className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#111a2e]">
+                  + Ad
+                </button>
+                <button onClick={() => setCreateMode("metric")} className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-[#1B3156] text-white">
+                  + Log Metrics
+                </button>
+              </>
+            )}
             <select
               value={clickMetric}
               onChange={(e) => setClickMetric(e.target.value as any)}
@@ -698,6 +737,108 @@ export default function MetaAdsPage() {
             </tbody>
           </table>
         </div>
+      </Modal>
+
+      {/* Create Campaign / Ad Set / Ad / Log Metrics Modals */}
+      <Modal open={createMode === "campaign"} onClose={() => setCreateMode(null)} title="Create Advertising Campaign" maxWidth="max-w-md">
+        <form onSubmit={(e) => { e.preventDefault(); submitMetaCreate("create_campaign", cmpForm); }} className="space-y-3 text-xs">
+          <input required placeholder="Campaign Name *" value={cmpForm.name} onChange={(e) => setCmpForm({ ...cmpForm, name: e.target.value })} className="w-full px-3 py-2 rounded-lg border bg-transparent" />
+          <div className="grid grid-cols-2 gap-2">
+            <select value={cmpForm.objective} onChange={(e) => setCmpForm({ ...cmpForm, objective: e.target.value })} className="px-3 py-2 rounded-lg border bg-white dark:bg-slate-900">
+              <option value="Lead Generation">Lead Generation</option>
+              <option value="Conversions">Conversions</option>
+              <option value="Messages">Messages</option>
+              <option value="Traffic">Traffic</option>
+            </select>
+            <select value={cmpForm.platform} onChange={(e) => setCmpForm({ ...cmpForm, platform: e.target.value })} className="px-3 py-2 rounded-lg border bg-white dark:bg-slate-900">
+              <option value="Facebook">Facebook</option>
+              <option value="Instagram">Instagram</option>
+              <option value="Facebook & Instagram">Facebook & Instagram</option>
+            </select>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <input type="number" required placeholder="Budget (₹)" value={cmpForm.budget} onChange={(e) => setCmpForm({ ...cmpForm, budget: e.target.value })} className="px-3 py-2 rounded-lg border bg-transparent" />
+            <select value={cmpForm.status} onChange={(e) => setCmpForm({ ...cmpForm, status: e.target.value })} className="px-3 py-2 rounded-lg border bg-white dark:bg-slate-900">
+              <option value="Active">Active</option>
+              <option value="Paused">Paused</option>
+            </select>
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <button type="button" onClick={() => setCreateMode(null)} className="px-4 py-2 rounded-lg border">Cancel</button>
+            <button type="submit" className="px-4 py-2 rounded-lg bg-[#0B5CA8] text-white font-semibold">Create Campaign</button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal open={createMode === "adset"} onClose={() => setCreateMode(null)} title="Create Ad Set" maxWidth="max-w-md">
+        <form onSubmit={(e) => { e.preventDefault(); submitMetaCreate("create_ad_set", adSetForm); }} className="space-y-3 text-xs">
+          <select required value={adSetForm.campaignId} onChange={(e) => setAdSetForm({ ...adSetForm, campaignId: e.target.value })} className="w-full px-3 py-2 rounded-lg border bg-white dark:bg-slate-900">
+            <option value="">Select Campaign...</option>
+            {(data?.campaigns || []).map((c: any) => <option key={c.id} value={c.id}>{c.campaignCode} — {c.name}</option>)}
+          </select>
+          <input required placeholder="Ad Set Name *" value={adSetForm.name} onChange={(e) => setAdSetForm({ ...adSetForm, name: e.target.value })} className="w-full px-3 py-2 rounded-lg border bg-transparent" />
+          <input placeholder="Audience Targeting" value={adSetForm.audienceInfo} onChange={(e) => setAdSetForm({ ...adSetForm, audienceInfo: e.target.value })} className="w-full px-3 py-2 rounded-lg border bg-transparent" />
+          <div className="grid grid-cols-2 gap-2">
+            <input placeholder="Placement" value={adSetForm.placement} onChange={(e) => setAdSetForm({ ...adSetForm, placement: e.target.value })} className="px-3 py-2 rounded-lg border bg-transparent" />
+            <input type="number" placeholder="Budget (₹)" value={adSetForm.budget} onChange={(e) => setAdSetForm({ ...adSetForm, budget: e.target.value })} className="px-3 py-2 rounded-lg border bg-transparent" />
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <button type="button" onClick={() => setCreateMode(null)} className="px-4 py-2 rounded-lg border">Cancel</button>
+            <button type="submit" className="px-4 py-2 rounded-lg bg-[#0B5CA8] text-white font-semibold">Create Ad Set</button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal open={createMode === "ad"} onClose={() => setCreateMode(null)} title="Create Advertisement" maxWidth="max-w-md">
+        <form onSubmit={(e) => { e.preventDefault(); submitMetaCreate("create_ad", adForm); }} className="space-y-3 text-xs">
+          <select required value={adForm.campaignId} onChange={(e) => setAdForm({ ...adForm, campaignId: e.target.value, adSetId: "" })} className="w-full px-3 py-2 rounded-lg border bg-white dark:bg-slate-900">
+            <option value="">Select Campaign...</option>
+            {(data?.campaigns || []).map((c: any) => <option key={c.id} value={c.id}>{c.campaignCode} — {c.name}</option>)}
+          </select>
+          <select required value={adForm.adSetId} onChange={(e) => setAdForm({ ...adForm, adSetId: e.target.value })} className="w-full px-3 py-2 rounded-lg border bg-white dark:bg-slate-900">
+            <option value="">Select Ad Set...</option>
+            {(data?.adSets || []).filter((as: any) => !adForm.campaignId || as.campaignId === adForm.campaignId).map((as: any) => (
+              <option key={as.id} value={as.id}>{as.adSetCode} — {as.name}</option>
+            ))}
+          </select>
+          <input required placeholder="Advertisement Name *" value={adForm.name} onChange={(e) => setAdForm({ ...adForm, name: e.target.value })} className="w-full px-3 py-2 rounded-lg border bg-transparent" />
+          <input placeholder="Headline" value={adForm.headline} onChange={(e) => setAdForm({ ...adForm, headline: e.target.value })} className="w-full px-3 py-2 rounded-lg border bg-transparent" />
+          <textarea placeholder="Primary Text" value={adForm.primaryText} onChange={(e) => setAdForm({ ...adForm, primaryText: e.target.value })} rows={2} className="w-full px-3 py-2 rounded-lg border bg-transparent" />
+          <div className="grid grid-cols-2 gap-2">
+            <select value={adForm.platform} onChange={(e) => setAdForm({ ...adForm, platform: e.target.value })} className="px-3 py-2 rounded-lg border bg-white dark:bg-slate-900">
+              <option value="Facebook">Facebook</option>
+              <option value="Instagram">Instagram</option>
+            </select>
+            <input placeholder="CTA (e.g. Get Quote)" value={adForm.cta} onChange={(e) => setAdForm({ ...adForm, cta: e.target.value })} className="px-3 py-2 rounded-lg border bg-transparent" />
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <button type="button" onClick={() => setCreateMode(null)} className="px-4 py-2 rounded-lg border">Cancel</button>
+            <button type="submit" className="px-4 py-2 rounded-lg bg-[#0B5CA8] text-white font-semibold">Create Ad</button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal open={createMode === "metric"} onClose={() => setCreateMode(null)} title="Log Daily Ad Performance Metrics" maxWidth="max-w-md">
+        <form onSubmit={(e) => { e.preventDefault(); submitMetaCreate("log_ad_metrics", metricForm); }} className="space-y-3 text-xs">
+          <select required value={metricForm.adId} onChange={(e) => setMetricForm({ ...metricForm, adId: e.target.value })} className="w-full px-3 py-2 rounded-lg border bg-white dark:bg-slate-900">
+            <option value="">Select Advertisement...</option>
+            {(data?.ads || []).map((a: any) => <option key={a.id} value={a.id}>{a.adCode} — {a.name} ({a.platform})</option>)}
+          </select>
+          <div className="grid grid-cols-2 gap-2">
+            <input type="date" required value={metricForm.date} onChange={(e) => setMetricForm({ ...metricForm, date: e.target.value })} className="px-3 py-2 rounded-lg border bg-transparent" />
+            <input type="number" required placeholder="Spend (₹)" value={metricForm.spend} onChange={(e) => setMetricForm({ ...metricForm, spend: e.target.value })} className="px-3 py-2 rounded-lg border bg-transparent" />
+            <input type="number" required placeholder="Impressions" value={metricForm.impressions} onChange={(e) => setMetricForm({ ...metricForm, impressions: e.target.value })} className="px-3 py-2 rounded-lg border bg-transparent" />
+            <input type="number" required placeholder="Reach" value={metricForm.reach} onChange={(e) => setMetricForm({ ...metricForm, reach: e.target.value })} className="px-3 py-2 rounded-lg border bg-transparent" />
+            <input type="number" required placeholder="Link Clicks" value={metricForm.linkClicks} onChange={(e) => setMetricForm({ ...metricForm, linkClicks: e.target.value })} className="px-3 py-2 rounded-lg border bg-transparent" />
+            <input type="number" placeholder="All Clicks" value={metricForm.allClicks} onChange={(e) => setMetricForm({ ...metricForm, allClicks: e.target.value })} className="px-3 py-2 rounded-lg border bg-transparent" />
+            <input type="number" placeholder="Landing Page Views" value={metricForm.landingPageViews} onChange={(e) => setMetricForm({ ...metricForm, landingPageViews: e.target.value })} className="px-3 py-2 rounded-lg border bg-transparent" />
+            <input type="number" placeholder="Meta Reported Leads" value={metricForm.metaLeads} onChange={(e) => setMetricForm({ ...metricForm, metaLeads: e.target.value })} className="px-3 py-2 rounded-lg border bg-transparent" />
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <button type="button" onClick={() => setCreateMode(null)} className="px-4 py-2 rounded-lg border">Cancel</button>
+            <button type="submit" className="px-4 py-2 rounded-lg bg-[#0B5CA8] text-white font-semibold">Save Metrics</button>
+          </div>
+        </form>
       </Modal>
     </AppShell>
   );

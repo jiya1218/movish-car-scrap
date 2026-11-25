@@ -104,6 +104,8 @@ function LeadsContent() {
     additionalVehicleDetails: "",
     leadSourceId: "",
     campaignId: "",
+    adSetId: "",
+    adId: "",
     expectedSellingPrice: "",
     assignedEmployeeId: "",
     priority: "Warm",
@@ -752,12 +754,28 @@ function LeadsContent() {
                   <option key={s.id} value={s.id}>{s.name}</option>
                 ))}
               </select>
-              <select value={form.campaignId} onChange={(e) => setForm({ ...form, campaignId: e.target.value })} className="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900">
+              <select value={form.campaignId} onChange={(e) => setForm({ ...form, campaignId: e.target.value, adSetId: "", adId: "" })} className="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900">
                 <option value="">No Campaign / Direct</option>
                 {(data?.options?.campaigns || []).map((c: any) => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
               </select>
+              {form.campaignId && (
+                <>
+                  <select value={form.adSetId} onChange={(e) => setForm({ ...form, adSetId: e.target.value, adId: "" })} className="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900">
+                    <option value="">Ad Set (Optional)</option>
+                    {(data?.options?.adSets || []).filter((as: any) => as.campaignId === form.campaignId).map((as: any) => (
+                      <option key={as.id} value={as.id}>{as.name}</option>
+                    ))}
+                  </select>
+                  <select value={form.adId} onChange={(e) => setForm({ ...form, adId: e.target.value })} className="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900">
+                    <option value="">Advertisement (Optional)</option>
+                    {(data?.options?.ads || []).filter((a: any) => a.campaignId === form.campaignId && (!form.adSetId || a.adSetId === form.adSetId)).map((a: any) => (
+                      <option key={a.id} value={a.id}>{a.name}</option>
+                    ))}
+                  </select>
+                </>
+              )}
               <select value={form.assignedEmployeeId} onChange={(e) => setForm({ ...form, assignedEmployeeId: e.target.value })} className="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900">
                 <option value="">Unassigned</option>
                 {(data?.options?.employees || []).map((e: any) => (

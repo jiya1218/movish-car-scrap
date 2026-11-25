@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { canPerform, getSessionContext } from "@/lib/auth";
+import { logAudit } from "@/lib/audit";
 import { computeAdMetrics, safeDivide } from "@/lib/format";
 import { STAGE_INDEX } from "@/lib/constants";
 
@@ -232,5 +233,131 @@ export async function GET(req: Request) {
   } catch (err) {
     console.error("Meta Ads GET error:", err);
     return NextResponse.json({ error: "Failed to load Meta Ads metrics" }, { status: 500 });
+  }
+}
+
+export async function POST(req: Request) {
+  try {
+    const session = await getSessionContext();
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!canPerform(session, "meta_ads:manage")) {
+      return NextResponse.json({ error: "Forbidden: Meta Ads management permission required" }, { status: 403 });
+    }
+
+    const body = await req.json();
+    const action = String(body.action || "create_campaign");
+
+    if (action === "create_campaign") {
+      const name = String(body.name ?? "").trim();
+      if (!name) return NextResponse.json({ error: "Campaign name is required." }, { status: 400 });
+      const count = await prisma.campaign.count();
+      const campaign = await prisma.campaign.create({
+        data: {
+          campaignCode: `CMP-${String(count + 1).padStart(3, "0")}`,
+          metaCampaignId: String(body.metaCampaignId || `2386${Date.now().toString().slice(-7)}`),
+          name,
+          objective: String(body.objective || "Lead Generation"),
+          platform: String(body.platform || "Facebook"),
+          status: String(body.status || "Active"),
+          budget: Number(body.budget || 25000),
+          startDate: body.startDate ? new Date(body.startDate) : new Date(),
+          endDate: body.endDate ? new Date(body.endDate) : null,
+          attributionWindowDays: Number(body.attributionWindowDays || 7),
+        },
+      });
+      await logAudit({
+        actorUserId: session.userId,
+        actorName: session.name,
+        action: "CAMPAIGN_CREATED",
+        entityType: "Campaign",
+        entityId: campaign.id,
+        summary: `Created campaign ${campaign.campaignCode} (${campaign.name})`,
+      });
+      return NextResponse.json({ campaign }, { status: 201 });
+    }
+
+    if (action === "create_ad_set") {
+      const name = String(body.name ?? "").trim();
+      const campaignId = String(body.campaignId ?? "");
+      if (!name || !campaignId) return NextResponse.json({ error: "Campaign and Ad Set name are required." }, { status: 400 });
+      const count = await prisma.adSet.count();
+      const adSet = await prisma.adSet.create({
+        data: {
+          adSetCode: `ADS-${String(count + 1).padStart(3, "0")}`,
+          metaAdSetId: String(body.metaAdSetId || `2387${Date.now().toString().slice(-7)}`),
+          campaignId,
+          name,
+          audienceInfo: String(body.audienceInfo || "Gujarat Auto Owners 28-55"),
+          placement: String(body.placement || "Facebook Feed"),
+          budget: Number(body.budget || 10000),
+          status: String(body.status || "Active"),
+        },
+      });
+      return NextResponse.json({ adSet }, { status: 201 });
+    }
+
+    if (action === "create_ad") {
+      const name = String(body.name ?? "").trim();
+      const campaignId = String(body.campaignId ?? "");
+      const adSetId = String(body.adSetId ?? "");
+      if (!name || !campaignId || !adSetId) {
+        return NextResponse.json({ error: "Campaign, Ad Set, and Ad name are required." }, { status: 400 });
+      }
+      const count = await prisma.ad.count();
+      const ad = await prisma.ad.create({
+        data: {
+          adCode: `AD-${String(count + 1).padStart(3, "0")}`,
+          metaAdId: String(body.metaAdId || `2388${Date.now().toString().slice(-7)}`),
+          campaignId,
+          adSetId,
+          name,
+          creativePreviewUrl: "/logo.png",
+          primaryText: String(body.primaryText || "Get instant cash valuation and free pickup for scrap vehicles across Gujarat."),
+          headline: String(body.headline || "Sell Scrap Car at Best Rate"),
+          cta: String(body.cta || "Get Quote"),
+          platform: String(body.platform || "Facebook"),
+          placement: String(body.placement || "Facebook Feed"),
+          status: String(body.status || "Active"),
+        },
+      });
+      return NextResponse.json({ ad }, { status: 201 });
+    }
+
+    if (action === "log_ad_metrics") {
+      const adId = String(body.adId ?? "");
+      const ad = await prisma.ad.findUnique({ where: { id: adId } });
+      if (!ad) return NextResponse.json({ error: "Advertisement not found." }, { status: 404 });
+
+      const metric = await prisma.adMetric.create({
+        data: {
+          date: body.date ? new Date(body.date) : new Date(),
+          campaignId: ad.campaignId,
+          adSetId: ad.adSetId,
+          adId: ad.id,
+          platform: String(body.platform || ad.platform),
+          spend: Number(body.spend || 0),
+          impressions: Number(body.impressions || 0),
+          reach: Number(body.reach || 0),
+          linkClicks: Number(body.linkClicks || 0),
+          allClicks: Number(body.allClicks || body.linkClicks || 0),
+          landingPageViews: Number(body.landingPageViews || 0),
+          metaLeads: Number(body.metaLeads || 0),
+        },
+      });
+      await logAudit({
+        actorUserId: session.userId,
+        actorName: session.name,
+        action: "AD_METRIC_LOGGED",
+        entityType: "AdMetric",
+        entityId: metric.id,
+        summary: `Logged ad metrics for ${ad.adCode} (Spend ₹${metric.spend})`,
+      });
+      return NextResponse.json({ metric }, { status: 201 });
+    }
+
+    return NextResponse.json({ error: "Unsupported Meta Ads action" }, { status: 400 });
+  } catch (err) {
+    console.error("Meta Ads POST error:", err);
+    return NextResponse.json({ error: "Failed to save Meta Ads record" }, { status: 500 });
   }
 }

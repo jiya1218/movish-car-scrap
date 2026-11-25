@@ -39,6 +39,7 @@ export interface SessionPayload {
   roleCode: RoleCode;
   roleName: string;
   employeeId: string | null;
+  previewRoleCode?: RoleCode;
   exp: number;
 }
 
@@ -122,8 +123,32 @@ export async function getSessionContext(): Promise<AuthenticatedContext | null> 
 
   if (!user || !user.isActive) return null;
 
-  const roleCode = user.role.code as RoleCode;
-  const permissions = user.role.permissions.map((rp) => rp.permission.code);
+  let roleCode = user.role.code as RoleCode;
+  let roleName = user.role.name;
+  let permissions = user.role.permissions.map((rp) => rp.permission.code);
+
+  // Allow Super Admin / Admin to preview any role view cleanly even before creating separate staff accounts
+  if (
+    parsed.previewRoleCode &&
+    parsed.previewRoleCode !== roleCode &&
+    ["SUPER_ADMIN", "ADMIN"].includes(user.role.code)
+  ) {
+    const previewRole = await prisma.role.findUnique({
+      where: { code: parsed.previewRoleCode },
+      include: {
+        permissions: {
+          where: { allowed: true },
+          include: { permission: true },
+        },
+      },
+    });
+    if (previewRole) {
+      roleCode = previewRole.code as RoleCode;
+      roleName = `${previewRole.name} (Preview)`;
+      permissions = previewRole.permissions.map((rp) => rp.permission.code);
+    }
+  }
+
   const allowedModules = ROLE_NAV_ACCESS[roleCode] ?? ["dashboard"];
 
   return {
@@ -131,7 +156,7 @@ export async function getSessionContext(): Promise<AuthenticatedContext | null> 
     email: user.email,
     name: user.name,
     roleCode,
-    roleName: user.role.name,
+    roleName,
     employeeId: user.employeeId,
     permissions,
     allowedModules,
