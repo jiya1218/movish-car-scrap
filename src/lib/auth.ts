@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import { cookies } from "next/headers";
 import { prisma } from "./prisma";
-import { ROLE_NAV_ACCESS, type RoleCode } from "./constants";
+import { ROLE_NAV_ACCESS, ROLE_PERMISSION_DEFAULTS, type RoleCode } from "./constants";
 
 const SESSION_COOKIE_NAME = "movish_bms_session";
 const SESSION_MAX_AGE_SEC = 60 * 60 * 24 * 7; // 7 days
@@ -97,7 +97,7 @@ export interface AuthenticatedContext {
 }
 
 /**
- * Resolves the currently authenticated user and live DB permissions from cookies.
+ * Resolves the currently authenticated user and permissions from cookies + DB (with stateless fallback).
  */
 export async function getSessionContext(): Promise<AuthenticatedContext | null> {
   const cookieStore = await cookies();
@@ -105,35 +105,51 @@ export async function getSessionContext(): Promise<AuthenticatedContext | null> 
   const parsed = verifySessionToken(rawToken);
   if (!parsed) return null;
 
-  const user = await prisma.user.findUnique({
-    where: { id: parsed.userId },
-    include: {
-      role: {
-        include: {
-          permissions: {
-            where: { allowed: true },
-            include: { permission: true },
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: parsed.userId },
+      include: {
+        role: {
+          include: {
+            permissions: {
+              where: { allowed: true },
+              include: { permission: true },
+            },
           },
         },
       },
-    },
-  });
+    });
 
-  if (!user || !user.isActive) return null;
+    if (user) {
+      if (!user.isActive) return null;
+      const roleCode = user.role.code as RoleCode;
+      const permissions = user.role.permissions.map((rp) => rp.permission.code);
+      const allowedModules = ROLE_NAV_ACCESS[roleCode] ?? ["dashboard"];
+      return {
+        userId: user.id,
+        email: user.email,
+        name: user.name,
+        roleCode,
+        roleName: user.role.name,
+        employeeId: user.employeeId,
+        permissions,
+        allowedModules,
+      };
+    }
+  } catch {
+    // Fall back to HMAC-verified cookie payload when running without a persistent database
+  }
 
-  const roleCode = user.role.code as RoleCode;
-  const permissions = user.role.permissions.map((rp) => rp.permission.code);
-  const allowedModules = ROLE_NAV_ACCESS[roleCode] ?? ["dashboard"];
-
+  const roleCode = parsed.roleCode;
   return {
-    userId: user.id,
-    email: user.email,
-    name: user.name,
+    userId: parsed.userId,
+    email: parsed.email,
+    name: parsed.name,
     roleCode,
-    roleName: user.role.name,
-    employeeId: user.employeeId,
-    permissions,
-    allowedModules,
+    roleName: parsed.roleName,
+    employeeId: parsed.employeeId,
+    permissions: ROLE_PERMISSION_DEFAULTS[roleCode] ?? ["dashboard:view"],
+    allowedModules: ROLE_NAV_ACCESS[roleCode] ?? ["dashboard"],
   };
 }
 

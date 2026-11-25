@@ -12,8 +12,9 @@
 .env
 .env*.local
 
-# Local SQLite database files
+# Local SQLite database files (keep clean baseline template for serverless fallback)
 /prisma/*.db
+!/prisma/clean-template.db
 /prisma/*.db-journal
 /prisma/*.db-wal
 /prisma/*.db-shm

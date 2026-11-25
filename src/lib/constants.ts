@@ -361,3 +361,51 @@ export const ROLE_NAV_ACCESS: Record<RoleCode, string[]> = {
     "dashboard", "transactions", "vehicles", "customers", "reports", "notifications",
   ],
 };
+
+export const ALL_PERMISSION_CODES = [
+  "dashboard:view", "meta_ads:view", "meta_ads:manage", "leads:view", "leads:view_all",
+  "leads:create", "leads:edit", "leads:delete", "leads:assign", "leads:merge",
+  "followups:manage", "customers:manage", "vehicles:view", "vehicles:manage",
+  "quotations:create", "quotations:approve", "finance:view", "finance:manage",
+  "team:view", "team:manage", "reports:view", "reports:export", "settings:manage", "audit:view",
+] as const;
+
+export const ROLE_PERMISSION_DEFAULTS: Record<RoleCode, string[]> = {
+  SUPER_ADMIN: [...ALL_PERMISSION_CODES],
+  ADMIN: ALL_PERMISSION_CODES.filter((p) => p !== "audit:view"),
+  MANAGER: [
+    "dashboard:view", "meta_ads:view", "leads:view", "leads:view_all", "leads:create", "leads:edit",
+    "leads:assign", "leads:merge", "followups:manage", "customers:manage", "vehicles:view",
+    "quotations:create", "quotations:approve", "team:view", "team:manage", "reports:view", "reports:export",
+  ],
+  SALES_EXECUTIVE: [
+    "dashboard:view", "leads:view", "leads:create", "leads:edit", "followups:manage",
+    "customers:manage", "vehicles:view", "quotations:create",
+  ],
+  MARKETING_EXECUTIVE: [
+    "dashboard:view", "meta_ads:view", "meta_ads:manage", "leads:view", "leads:view_all",
+    "reports:view", "reports:export",
+  ],
+  OPERATIONS_EXECUTIVE: [
+    "dashboard:view", "vehicles:view", "vehicles:manage", "customers:manage", "reports:view",
+  ],
+  ACCOUNTS_EXECUTIVE: [
+    "dashboard:view", "finance:view", "finance:manage", "vehicles:view", "reports:view", "reports:export",
+  ],
+};
+
+export const BUILTIN_ROLE_ACCOUNTS: Array<{
+  username: string;
+  email: string;
+  name: string;
+  roleCode: RoleCode;
+  roleName: string;
+}> = [
+  { username: "owner", email: "owner@movishgroup.in", name: "Movish Owner", roleCode: "SUPER_ADMIN", roleName: "Super Admin / Business Owner" },
+  { username: "admin", email: "admin@movishgroup.in", name: "Movish Admin", roleCode: "ADMIN", roleName: "Admin" },
+  { username: "manager", email: "manager@movishgroup.in", name: "Movish Manager", roleCode: "MANAGER", roleName: "Manager" },
+  { username: "sales", email: "sales@movishgroup.in", name: "Movish Sales Executive", roleCode: "SALES_EXECUTIVE", roleName: "Sales Executive" },
+  { username: "marketing", email: "marketing@movishgroup.in", name: "Movish Marketing Executive", roleCode: "MARKETING_EXECUTIVE", roleName: "Marketing Executive" },
+  { username: "operations", email: "operations@movishgroup.in", name: "Movish Operations Executive", roleCode: "OPERATIONS_EXECUTIVE", roleName: "Operations Executive" },
+  { username: "accounts", email: "accounts@movishgroup.in", name: "Movish Accounts Executive", roleCode: "ACCOUNTS_EXECUTIVE", roleName: "Accounts Executive" },
+];
