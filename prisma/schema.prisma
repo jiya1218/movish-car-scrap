@@ -1,0 +1,703 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Role {
+  id          String           @id @default(cuid())
+  code        String           @unique
+  name        String
+  description String
+  isSystem    Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  users       User[]
+  employees   Employee[]
+  permissions RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String           @id @default(cuid())
+  code        String           @unique
+  module      String
+  action      String
+  description String
+  roles       RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  id           String     @id @default(cuid())
+  roleId       String
+  permissionId String
+  allowed      Boolean    @default(true)
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  passwordHash String
+  name         String
+  roleId       String
+  employeeId   String?    @unique
+  isActive     Boolean    @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  role         Role       @relation(fields: [roleId], references: [id])
+  employee     Employee?  @relation(fields: [employeeId], references: [id])
+  auditLogs    AuditLog[]
+
+  @@map("users")
+}
+
+model Employee {
+  id                     String             @id @default(cuid())
+  employeeCode           String             @unique
+  fullName               String
+  mobile                 String
+  email                  String             @unique
+  roleId                 String
+  joiningDate            DateTime
+  assignedDistrict       String
+  assignedCity           String
+  accountStatus          String             @default("Active")
+  reportingManagerId     String?
+  monthlyLeadTarget      Int                @default(30)
+  monthlyQualifiedTarget Int                @default(15)
+  monthlyQuotationTarget Int                @default(12)
+  monthlyDealTarget      Int                @default(8)
+  monthlyPickupTarget    Int                @default(8)
+  monthlyCompletedTarget Int                @default(6)
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
+  role                   Role               @relation(fields: [roleId], references: [id])
+  reportingManager       Employee?          @relation("ManagerSubordinates", fields: [reportingManagerId], references: [id])
+  subordinates           Employee[]         @relation("ManagerSubordinates")
+  user                   User?
+  assignedLeads          Lead[]             @relation("AssignedLeads")
+  createdLeads           Lead[]             @relation("CreatedLeads")
+  assignedByLeads        Lead[]             @relation("AssignedByLeads")
+  leadActivities         LeadActivity[]
+  assignmentsFrom        LeadAssignment[]   @relation("AssignmentFrom")
+  assignmentsTo          LeadAssignment[]   @relation("AssignmentTo")
+  assignmentsBy          LeadAssignment[]   @relation("AssignmentBy")
+  followUps              FollowUp[]
+  inspections            Inspection[]
+  preparedQuotations     Quotation[]        @relation("QuotationPreparedBy")
+  approvedQuotations     Quotation[]        @relation("QuotationApprovedBy")
+  uploadedDocuments      Document[]
+  enteredExpenses        Expense[]
+  recordedPayments       Payment[]
+  communicationLogs      CommunicationLog[]
+
+  @@map("employees")
+}
+
+model Location {
+  id            String     @id @default(cuid())
+  state         String     @default("Gujarat")
+  district      String
+  city          String
+  town          String?
+  area          String?
+  pinCode       String
+  isServiceable Boolean    @default(true)
+  yardLocation  String?
+  createdAt     DateTime   @default(now())
+  customers     Customer[]
+
+  @@index([district, city])
+  @@map("locations")
+}
+
+model Customer {
+  id                     String             @id @default(cuid())
+  customerCode           String             @unique
+  name                   String
+  primaryMobile          String
+  altMobile              String?
+  email                  String?
+  customerType           String             @default("Individual")
+  state                  String             @default("Gujarat")
+  district               String
+  city                   String
+  town                   String?
+  area                   String?
+  pinCode                String?
+  fullAddress            String?
+  preferredContactMethod String             @default("Phone Call")
+  locationId             String?
+  notes                  String?
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
+  location               Location?          @relation(fields: [locationId], references: [id])
+  leads                  Lead[]
+  vehicles               Vehicle[]
+  followUps              FollowUp[]
+  quotations             Quotation[]
+  pickups                Pickup[]
+  transactions           Transaction[]
+  communicationLogs      CommunicationLog[]
+
+  @@index([primaryMobile])
+  @@index([district, city])
+  @@map("customers")
+}
+
+model LeadSource {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  category  String
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  leads     Lead[]
+
+  @@map("lead_sources")
+}
+
+model Campaign {
+  id                    String     @id @default(cuid())
+  campaignCode          String     @unique
+  metaCampaignId        String     @unique
+  name                  String
+  objective             String
+  platform              String
+  status                String     @default("Active")
+  budget                Float
+  startDate             DateTime
+  endDate               DateTime?
+  attributionWindowDays Int        @default(7)
+  createdAt             DateTime   @default(now())
+  updatedAt             DateTime   @updatedAt
+  adSets                AdSet[]
+  ads                   Ad[]
+  metrics               AdMetric[]
+  leads                 Lead[]     @relation("CampaignLeads")
+
+  @@map("campaigns")
+}
+
+model AdSet {
+  id           String     @id @default(cuid())
+  adSetCode    String     @unique
+  metaAdSetId  String     @unique
+  campaignId   String
+  name         String
+  audienceInfo String
+  placement    String
+  budget       Float
+  status       String     @default("Active")
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  campaign     Campaign   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  ads          Ad[]
+  metrics      AdMetric[]
+  leads        Lead[]
+
+  @@map("ad_sets")
+}
+
+model Ad {
+  id                 String     @id @default(cuid())
+  adCode             String     @unique
+  metaAdId           String     @unique
+  campaignId         String
+  adSetId            String
+  name               String
+  creativePreviewUrl String?
+  primaryText        String
+  headline           String
+  cta                String
+  platform           String
+  placement          String
+  status             String     @default("Active")
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+  campaign           Campaign   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  adSet              AdSet      @relation(fields: [adSetId], references: [id], onDelete: Cascade)
+  metrics            AdMetric[]
+  leads              Lead[]
+
+  @@map("ads")
+}
+
+model AdMetric {
+  id               String   @id @default(cuid())
+  date             DateTime
+  campaignId       String
+  adSetId          String
+  adId             String
+  platform         String
+  spend            Float
+  impressions      Int
+  reach            Int
+  linkClicks       Int
+  allClicks        Int
+  landingPageViews Int      @default(0)
+  metaLeads        Int      @default(0)
+  createdAt        DateTime @default(now())
+  campaign         Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  adSet            AdSet    @relation(fields: [adSetId], references: [id], onDelete: Cascade)
+  ad               Ad       @relation(fields: [adId], references: [id], onDelete: Cascade)
+
+  @@index([date, campaignId])
+  @@index([platform, date])
+  @@map("ad_metrics")
+}
+
+model Lead {
+  id                    String             @id @default(cuid())
+  leadCode              String             @unique
+  customerId            String
+  leadSourceId          String
+  campaignId            String?
+  adSetId               String?
+  adId                  String?
+  formName              String?
+  metaLeadId            String?
+  firstTouchSource      String?
+  firstTouchCampaign    String?
+  firstTouchAd          String?
+  lastTouchSource       String?
+  lastTouchCampaign     String?
+  lastTouchAd           String?
+  attributionMethod     String             @default("First-Touch")
+  attributionConfidence String             @default("Confirmed")
+  enquiryDate           DateTime           @default(now())
+  expectedSellingPrice  Float?
+  quotationAmount       Float?
+  assignedEmployeeId    String?
+  createdById           String?
+  assignedById          String?
+  priority              String             @default("Warm")
+  status                String             @default("New")
+  lostReason            String?
+  qualificationStatus   String             @default("Unverified")
+  intentScore           Int                @default(35)
+  intentCategory        String             @default("Medium Intent")
+  lastContactAt         DateTime?
+  nextFollowUpAt        DateTime?
+  customerNotes         String?
+  internalRemarks       String?
+  isDuplicate           Boolean            @default(false)
+  duplicateOfLeadId     String?
+  mergedIntoLeadId      String?
+  isDeleted             Boolean            @default(false)
+  deletedAt             DateTime?
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  customer              Customer           @relation(fields: [customerId], references: [id])
+  leadSource            LeadSource         @relation(fields: [leadSourceId], references: [id])
+  campaign              Campaign?          @relation("CampaignLeads", fields: [campaignId], references: [id])
+  adSet                 AdSet?             @relation(fields: [adSetId], references: [id])
+  ad                    Ad?                @relation(fields: [adId], references: [id])
+  assignedEmployee      Employee?          @relation("AssignedLeads", fields: [assignedEmployeeId], references: [id])
+  createdBy             Employee?          @relation("CreatedLeads", fields: [createdById], references: [id])
+  assignedBy            Employee?          @relation("AssignedByLeads", fields: [assignedById], references: [id])
+  activities            LeadActivity[]
+  assignments           LeadAssignment[]
+  followUps             FollowUp[]
+  vehicles              Vehicle[]
+  quotations            Quotation[]
+  transactions          Transaction[]
+  communicationLogs     CommunicationLog[]
+
+  @@index([status, isDeleted])
+  @@index([assignedEmployeeId])
+  @@index([campaignId])
+  @@index([enquiryDate])
+  @@map("leads")
+}
+
+model LeadActivity {
+  id            String    @id @default(cuid())
+  leadId        String
+  activityType  String
+  oldStatus     String?
+  newStatus     String?
+  summary       String
+  details       String?
+  performedById String?
+  createdAt     DateTime  @default(now())
+  lead          Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  performedBy   Employee? @relation(fields: [performedById], references: [id])
+
+  @@index([leadId, createdAt])
+  @@map("lead_activities")
+}
+
+model LeadAssignment {
+  id             String    @id @default(cuid())
+  leadId         String
+  fromEmployeeId String?
+  toEmployeeId   String
+  assignedById   String?
+  reason         String?
+  createdAt      DateTime  @default(now())
+  lead           Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  fromEmployee   Employee? @relation("AssignmentFrom", fields: [fromEmployeeId], references: [id])
+  toEmployee     Employee  @relation("AssignmentTo", fields: [toEmployeeId], references: [id])
+  assignedBy     Employee? @relation("AssignmentBy", fields: [assignedById], references: [id])
+
+  @@map("lead_assignments")
+}
+
+model FollowUp {
+  id                 String    @id @default(cuid())
+  followUpCode       String    @unique
+  leadId             String
+  customerId         String
+  assignedEmployeeId String
+  followUpDate       DateTime
+  followUpTime       String
+  type               String
+  priority           String    @default("Medium")
+  status             String    @default("Pending")
+  notes              String?
+  contactResult      String?
+  customerResponse   String?
+  nextAction         String?
+  nextFollowUpDate   DateTime?
+  completedAt        DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  lead               Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  customer           Customer  @relation(fields: [customerId], references: [id])
+  assignedEmployee   Employee  @relation(fields: [assignedEmployeeId], references: [id])
+
+  @@index([followUpDate, status])
+  @@map("followups")
+}
+
+model Vehicle {
+  id                         String        @id @default(cuid())
+  vehicleCode                String        @unique
+  customerId                 String
+  leadId                     String?
+  registrationNumber         String
+  manufacturer               String
+  model                      String
+  variant                    String?
+  manufacturingYear          Int
+  category                   String        @default("Hatchback")
+  fuelType                   String        @default("Petrol")
+  vehicleCondition           String        @default("Fair")
+  runningCondition           String        @default("Running")
+  engineCondition            String        @default("Average")
+  bodyCondition              String        @default("Minor Rust / Dents")
+  locationState              String        @default("Gujarat")
+  locationDistrict           String
+  locationCity               String
+  locationArea               String?
+  locationPinCode            String?
+  ownershipDetails           String        @default("1st Owner")
+  rcAvailable                String        @default("Yes")
+  insuranceStatus            String        @default("Expired")
+  documentVerificationStatus String        @default("Pending")
+  purchaseStatus             String        @default("Enquiry")
+  photosJson                 String        @default("[]")
+  additionalDetails          String?
+  createdAt                  DateTime      @default(now())
+  updatedAt                  DateTime      @updatedAt
+  customer                   Customer      @relation(fields: [customerId], references: [id])
+  lead                       Lead?         @relation(fields: [leadId], references: [id])
+  inspections                Inspection[]
+  quotations                 Quotation[]
+  pickups                    Pickup[]
+  documents                  Document[]
+  inventory                  Inventory?
+  transactions               Transaction[]
+  expenses                   Expense[]
+  revenues                   Revenue[]
+  payments                   Payment[]
+
+  @@index([registrationNumber])
+  @@index([locationDistrict, locationCity])
+  @@map("vehicles")
+}
+
+model Inspection {
+  id                     String   @id @default(cuid())
+  inspectionCode         String   @unique
+  vehicleId              String
+  inspectionDate         DateTime @default(now())
+  inspectorId            String
+  vehicleCondition       String
+  engineCondition        String
+  bodyCondition          String
+  tyreCondition          String
+  batteryCondition       String
+  accidentHistory        String?
+  photosJson             String   @default("[]")
+  estimatedPurchaseValue Float
+  notes                  String?
+  result                 String   @default("Eligible")
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  vehicle                Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  inspector              Employee @relation(fields: [inspectorId], references: [id])
+
+  @@map("inspections")
+}
+
+model Quotation {
+  id                       String    @id @default(cuid())
+  quotationCode            String    @unique
+  vehicleId                String
+  leadId                   String?
+  customerId               String
+  revisionNumber           Int       @default(1)
+  offeredPurchasePrice     Float
+  quotationDate            DateTime  @default(now())
+  validityDate             DateTime
+  preparedById             String
+  approvalStatus           String    @default("Pending Approval")
+  approvedById             String?
+  customerAcceptanceStatus String    @default("Pending")
+  negotiationNotes         String?
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
+  vehicle                  Vehicle   @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  lead                     Lead?     @relation(fields: [leadId], references: [id])
+  customer                 Customer  @relation(fields: [customerId], references: [id])
+  preparedBy               Employee  @relation("QuotationPreparedBy", fields: [preparedById], references: [id])
+  approvedBy               Employee? @relation("QuotationApprovedBy", fields: [approvedById], references: [id])
+
+  @@map("quotations")
+}
+
+model Pickup {
+  id                    String    @id @default(cuid())
+  pickupCode            String    @unique
+  vehicleId             String
+  customerId            String
+  pickupAddress         String
+  district              String
+  city                  String
+  scheduledDate         DateTime?
+  scheduledTime         String?
+  assignedDriver        String?
+  assignedVendor        String?
+  transportationDetails String?
+  pickupStatus          String    @default("Not Scheduled")
+  actualPickupDate      DateTime?
+  pickupExpenses        Float     @default(0)
+  remarks               String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  vehicle               Vehicle   @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  customer              Customer  @relation(fields: [customerId], references: [id])
+
+  @@map("pickups")
+}
+
+model Document {
+  id                  String    @id @default(cuid())
+  documentCode        String    @unique
+  vehicleId           String
+  documentType        String
+  fileName            String
+  fileReference       String?
+  uploadDate          DateTime  @default(now())
+  uploadedById        String?
+  verificationStatus  String    @default("Pending")
+  verificationRemarks String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  vehicle             Vehicle   @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  uploadedBy          Employee? @relation(fields: [uploadedById], references: [id])
+
+  @@map("documents")
+}
+
+model Inventory {
+  id                     String   @id @default(cuid())
+  inventoryCode          String   @unique
+  vehicleId              String   @unique
+  collectionDate         DateTime
+  currentLocation        String
+  storageLocation        String
+  processingStatus       String   @default("Awaiting Inspection")
+  estimatedValue         Float
+  actualRealizationValue Float    @default(0)
+  partsJson              String   @default("[]")
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  vehicle                Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@map("inventory")
+}
+
+model Transaction {
+  id                    String    @id @default(cuid())
+  transactionCode       String    @unique
+  leadId                String?
+  customerId            String
+  vehicleId             String
+  transactionDate       DateTime  @default(now())
+  vehiclePurchaseAmount Float
+  paymentStatus         String    @default("Pending")
+  paymentMethod         String    @default("Bank Transfer / IMPS")
+  paymentReference      String?
+  pickupExpense         Float     @default(0)
+  transportationExpense Float     @default(0)
+  labourExpense         Float     @default(0)
+  processingExpense     Float     @default(0)
+  otherExpenses         Float     @default(0)
+  realizationValue      Float     @default(0)
+  transactionStatus     String    @default("Open")
+  remarks               String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  lead                  Lead?     @relation(fields: [leadId], references: [id])
+  customer              Customer  @relation(fields: [customerId], references: [id])
+  vehicle               Vehicle   @relation(fields: [vehicleId], references: [id])
+  expenses              Expense[]
+  revenues              Revenue[]
+  payments              Payment[]
+
+  @@index([transactionDate, transactionStatus])
+  @@map("transactions")
+}
+
+model Expense {
+  id                     String       @id @default(cuid())
+  expenseCode            String       @unique
+  category               String
+  amount                 Float
+  date                   DateTime     @default(now())
+  transactionId          String?
+  vehicleId              String?
+  paymentMethod          String       @default("Bank Transfer")
+  reference              String?
+  enteredById            String?
+  includedInPurchaseCost Boolean      @default(false)
+  notes                  String?
+  createdAt              DateTime     @default(now())
+  updatedAt              DateTime     @updatedAt
+  transaction            Transaction? @relation(fields: [transactionId], references: [id])
+  vehicle                Vehicle?     @relation(fields: [vehicleId], references: [id])
+  enteredBy              Employee?    @relation(fields: [enteredById], references: [id])
+
+  @@index([date, category])
+  @@map("expenses")
+}
+
+model Revenue {
+  id            String       @id @default(cuid())
+  revenueCode   String       @unique
+  source        String
+  vehicleId     String?
+  transactionId String?
+  amount        Float
+  date          DateTime     @default(now())
+  buyer         String?
+  paymentStatus String       @default("Paid")
+  notes         String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  vehicle       Vehicle?     @relation(fields: [vehicleId], references: [id])
+  transaction   Transaction? @relation(fields: [transactionId], references: [id])
+
+  @@index([date, source])
+  @@map("revenues")
+}
+
+model Payment {
+  id               String       @id @default(cuid())
+  paymentCode      String       @unique
+  transactionId    String?
+  vehicleId        String?
+  direction        String       @default("Outbound")
+  amount           Float
+  paymentDate      DateTime     @default(now())
+  paymentMethod    String       @default("NEFT/IMPS")
+  paymentReference String?
+  status           String       @default("Paid")
+  recordedById     String?
+  notes            String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  transaction      Transaction? @relation(fields: [transactionId], references: [id])
+  vehicle          Vehicle?     @relation(fields: [vehicleId], references: [id])
+  recordedBy       Employee?    @relation(fields: [recordedById], references: [id])
+
+  @@map("payments")
+}
+
+model Notification {
+  id               String   @id @default(cuid())
+  notificationCode String   @unique
+  title            String
+  description      String
+  category         String
+  relatedModule    String?
+  relatedRecordId  String?
+  targetRoleCode   String?
+  isRead           Boolean  @default(false)
+  createdAt        DateTime @default(now())
+
+  @@index([isRead, createdAt])
+  @@map("notifications")
+}
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  actorUserId  String?
+  actorName    String
+  action       String
+  entityType   String
+  entityId     String
+  summary      String
+  metadataJson String?
+  createdAt    DateTime @default(now())
+  actorUser    User?    @relation(fields: [actorUserId], references: [id])
+
+  @@index([entityType, createdAt])
+  @@map("audit_logs")
+}
+
+model CommunicationLog {
+  id                String    @id @default(cuid())
+  commCode          String    @unique
+  customerId        String
+  leadId            String?
+  communicationType String
+  direction         String    @default("Outbound")
+  timestamp         DateTime  @default(now())
+  employeeId        String?
+  summary           String
+  outcome           String?
+  nextAction        String?
+  createdAt         DateTime  @default(now())
+  customer          Customer  @relation(fields: [customerId], references: [id])
+  lead              Lead?     @relation(fields: [leadId], references: [id])
+  employee          Employee? @relation(fields: [employeeId], references: [id])
+
+  @@index([timestamp, communicationType])
+  @@map("communication_logs")
+}
+
+model SystemSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  category  String
+  valueJson String
+  updatedAt DateTime @updatedAt
+
+  @@map("system_settings")
+}

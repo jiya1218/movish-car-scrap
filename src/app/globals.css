@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-canvas: #f4f6fa;
+  --bg-card: #ffffff;
+  --border-subtle: #e2e8f0;
+  --text-primary: #0f172a;
+}
+
+.dark {
+  --bg-canvas: #0b1220;
+  --bg-card: #111a2e;
+  --border-subtle: #1e293b;
+  --text-primary: #f8fafc;
+}
+
+body {
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+/* Custom sleek scrollbars for Kanban & dense tables */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+}
