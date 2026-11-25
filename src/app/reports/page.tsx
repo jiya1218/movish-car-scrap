@@ -23,7 +23,14 @@ export default function ReportsPage() {
       if (!res.ok) throw new Error("Unable to generate reports");
       const json = await res.json();
       setData(json);
-      if (json.permissions?.canViewAds) setTab((prev) => prev);
+      const allowedTabs = [
+        ...(json.permissions?.canViewAds ? ["marketing"] : []),
+        ...(json.permissions?.canViewCrm ? ["crm"] : []),
+        ...(json.permissions?.canViewFinance ? ["finance"] : []),
+        ...(json.permissions?.canViewOperations ? ["operations"] : []),
+        ...(json.permissions?.canViewTeam ? ["team"] : []),
+      ];
+      setTab((prev) => (allowedTabs.includes(prev) ? prev : ((allowedTabs[0] as any) || "crm")));
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -156,10 +163,10 @@ export default function ReportsPage() {
           <div className="flex flex-wrap gap-1.5 bg-white dark:bg-[#111a2e] p-1 rounded-xl border border-slate-200 dark:border-slate-800 w-fit text-xs">
             {[
               ...(data.permissions.canViewAds ? [{ key: "marketing", label: "Marketing" }] : []),
-              { key: "crm", label: "CRM" },
+              ...(data.permissions.canViewCrm ? [{ key: "crm", label: "CRM" }] : []),
               ...(data.permissions.canViewFinance ? [{ key: "finance", label: "Finance" }] : []),
-              { key: "operations", label: "Operations" },
-              { key: "team", label: "Team" },
+              ...(data.permissions.canViewOperations ? [{ key: "operations", label: "Operations" }] : []),
+              ...(data.permissions.canViewTeam ? [{ key: "team", label: "Team" }] : []),
             ].map((t) => (
               <button key={t.key} onClick={() => setTab(t.key as any)} className={`px-3.5 py-1.5 rounded-lg font-semibold ${tab === t.key ? "bg-[#0B5CA8] text-white" : "text-slate-600 dark:text-slate-300"}`}>
                 {t.label}

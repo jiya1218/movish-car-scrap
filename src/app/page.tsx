@@ -43,7 +43,14 @@ import { formatDate, formatDateTime, formatINR, formatNumber } from "@/lib/forma
 
 interface DashboardData {
   dateRange: { start: string; end: string };
-  permissions: { canViewFinance: boolean; canViewAds: boolean; viewAllLeads: boolean };
+  permissions: {
+    canViewFinance: boolean;
+    canViewAds: boolean;
+    viewAllLeads: boolean;
+    canViewLeads: boolean;
+    canViewVehicles: boolean;
+    canViewTeam: boolean;
+  };
   kpis: Array<{
     key: string;
     label: string;
@@ -129,7 +136,11 @@ export default function DashboardPage() {
         cache: "no-store",
       });
       if (!res.ok) throw new Error("Unable to load business overview");
-      setData(await res.json());
+      const json = await res.json();
+      setData(json);
+      if (!json.permissions?.canViewLeads) {
+        setActiveWidgetTab("operations");
+      }
     } catch (e: any) {
       setError(e.message || "Error loading dashboard");
     } finally {
@@ -213,7 +224,8 @@ export default function DashboardPage() {
           {/* Charts Grid */}
           <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* A. Lead Generation Trend */}
-            <Card className="p-5">
+            {data.permissions.canViewLeads && (
+              <Card className="p-5">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -255,10 +267,11 @@ export default function DashboardPage() {
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
-            </Card>
+              </Card>
+            )}
 
             {/* B. Advertising Spend Trend */}
-            {data.permissions.canViewAds ? (
+            {data.permissions.canViewAds && (
               <Card className="p-5">
                 <div className="flex items-center justify-between mb-4">
                   <div>
@@ -285,14 +298,11 @@ export default function DashboardPage() {
                   </ResponsiveContainer>
                 </div>
               </Card>
-            ) : (
-              <Card className="p-5 flex items-center justify-center text-xs text-slate-500">
-                Meta Advertising spend chart is restricted for your role.
-              </Card>
             )}
 
             {/* C. Lead Conversion Funnel */}
-            <Card className="p-5">
+            {data.permissions.canViewLeads && (
+              <Card className="p-5">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -322,10 +332,12 @@ export default function DashboardPage() {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-            </Card>
+              </Card>
+            )}
 
             {/* D. Lead Source Distribution */}
-            <Card className="p-5">
+            {data.permissions.canViewLeads && (
+              <Card className="p-5">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -367,7 +379,8 @@ export default function DashboardPage() {
                   ))}
                 </div>
               </div>
-            </Card>
+              </Card>
+            )}
           </section>
 
           {/* E. Business Performance Trend + F. Recent Business Activity */}
@@ -406,7 +419,8 @@ export default function DashboardPage() {
             )}
 
             {/* F. Recent Business Activity */}
-            <Card className={data.permissions.canViewFinance ? "lg:col-span-5 p-5" : "lg:col-span-12 p-5"}>
+            {data.permissions.canViewLeads && (
+              <Card className={data.permissions.canViewFinance ? "lg:col-span-5 p-5" : "lg:col-span-12 p-5"}>
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                   <Activity className="w-4 h-4 text-[#0B5CA8]" />
@@ -433,7 +447,8 @@ export default function DashboardPage() {
                   </Link>
                 ))}
               </div>
-            </Card>
+              </Card>
+            )}
           </section>
 
           {/* 5.4 Dashboard Quick Widgets */}
@@ -444,10 +459,10 @@ export default function DashboardPage() {
               </h2>
               <div className="flex flex-wrap gap-1.5 text-xs">
                 {[
-                  { key: "followups", label: "Follow-ups (Today & Overdue)" },
-                  { key: "leads", label: "Enquiries (New, Unassigned, Hot)" },
-                  { key: "performance", label: "Top Campaigns & Salespeople" },
-                  { key: "operations", label: "Pickups & Latest Transactions" },
+                  ...(data.permissions.canViewLeads ? [{ key: "followups", label: "Follow-ups (Today & Overdue)" }] : []),
+                  ...(data.permissions.canViewLeads ? [{ key: "leads", label: "Enquiries (New, Unassigned, Hot)" }] : []),
+                  ...((data.permissions.canViewAds || data.permissions.canViewTeam) ? [{ key: "performance", label: "Top Campaigns & Salespeople" }] : []),
+                  ...((data.permissions.canViewVehicles || data.permissions.canViewFinance) ? [{ key: "operations", label: "Pickups & Latest Transactions" }] : []),
                 ].map((t) => (
                   <button
                     key={t.key}

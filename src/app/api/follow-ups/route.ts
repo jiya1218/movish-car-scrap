@@ -8,6 +8,9 @@ export async function GET(req: Request) {
   try {
     const session = await getSessionContext();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session.allowedModules.includes("followups")) {
+      return NextResponse.json({ error: "Forbidden: Follow-ups module is restricted for your role" }, { status: 403 });
+    }
 
     const { searchParams } = new URL(req.url);
     const tab = searchParams.get("tab") || "today";

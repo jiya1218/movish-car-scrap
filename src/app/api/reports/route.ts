@@ -20,6 +20,9 @@ export async function GET(req: Request) {
 
     const canViewAds = canPerform(session, "meta_ads:view");
     const canViewFinance = canPerform(session, "finance:view");
+    const canViewCrm = canPerform(session, "leads:view");
+    const canViewOperations = canPerform(session, "vehicles:manage") || ["SUPER_ADMIN", "ADMIN", "MANAGER"].includes(session.roleCode);
+    const canViewTeam = canPerform(session, "team:view");
     const canExport = canPerform(session, "reports:export");
 
     const [campaigns, leads, vehicles, transactions, expenses, revenues, employees, followUps] = await Promise.all([
@@ -157,20 +160,22 @@ export async function GET(req: Request) {
     });
 
     return NextResponse.json({
-      permissions: { canViewAds, canViewFinance, canExport },
+      permissions: { canViewAds, canViewFinance, canViewCrm, canViewOperations, canViewTeam, canExport },
       marketingReport,
-      crmSummary,
-      crmLeads: leads.map((l) => ({
-        leadCode: l.leadCode,
-        customerName: l.customer.name,
-        city: l.customer.city,
-        source: l.leadSource.name,
-        campaign: l.campaign?.name ?? "Direct",
-        status: l.status,
-        priority: l.priority,
-        assignee: l.assignedEmployee?.fullName ?? "Unassigned",
-        enquiryDate: l.enquiryDate,
-      })),
+      crmSummary: canViewCrm ? crmSummary : null,
+      crmLeads: canViewCrm
+        ? leads.map((l) => ({
+            leadCode: l.leadCode,
+            customerName: l.customer.name,
+            city: l.customer.city,
+            source: l.leadSource.name,
+            campaign: l.campaign?.name ?? "Direct",
+            status: l.status,
+            priority: l.priority,
+            assignee: l.assignedEmployee?.fullName ?? "Unassigned",
+            enquiryDate: l.enquiryDate,
+          }))
+        : [],
       financeReport,
       financeTotals: canViewFinance
         ? {
@@ -178,8 +183,8 @@ export async function GET(req: Request) {
             netProfit: financeTotals.realization - financeTotals.purchaseCost - financeTotals.operationalExpenses,
           }
         : null,
-      operationsReport,
-      teamReport,
+      operationsReport: canViewOperations ? operationsReport : [],
+      teamReport: canViewTeam ? teamReport : [],
     });
   } catch (err) {
     console.error("Reports GET error:", err);

@@ -72,8 +72,11 @@ export async function GET(req: Request) {
     const { start, end, prevStart, prevEnd } = getPeriodWindow(searchParams);
 
     const viewAllLeads = canPerform(session, "leads:view_all");
+    const canViewLeads = canPerform(session, "leads:view");
     const canViewFinance = canPerform(session, "finance:view");
     const canViewAds = canPerform(session, "meta_ads:view");
+    const canViewVehicles = canPerform(session, "vehicles:view");
+    const canViewTeam = canPerform(session, "team:view");
 
     const leadEmployeeScope =
       !viewAllLeads && session.employeeId ? { assignedEmployeeId: session.employeeId } : {};
@@ -157,6 +160,7 @@ export async function GET(req: Request) {
         orderBy: { followUpDate: "asc" },
       }),
       prisma.leadActivity.findMany({
+        where: !viewAllLeads && session.employeeId ? { lead: { assignedEmployeeId: session.employeeId } } : {},
         take: 15,
         orderBy: { createdAt: "desc" },
         include: {
@@ -250,14 +254,22 @@ export async function GET(req: Request) {
       prev === 0 ? (cur > 0 ? 100 : 0) : Number((((cur - prev) / Math.abs(prev)) * 100).toFixed(1));
 
     const kpis = [
-      { key: "totalLeads", label: "Total Leads", value: curLeadSum.total, prev: prevLeadSum.total, delta: pctDelta(curLeadSum.total, prevLeadSum.total), format: "number", desc: "Total enquiries received in period" },
-      { key: "newLeads", label: "New Leads", value: curLeadSum.newCount, prev: prevLeadSum.newCount, delta: pctDelta(curLeadSum.newCount, prevLeadSum.newCount), format: "number", desc: "Leads awaiting first contact" },
-      { key: "contactedLeads", label: "Contacted Leads", value: curLeadSum.contacted, prev: prevLeadSum.contacted, delta: pctDelta(curLeadSum.contacted, prevLeadSum.contacted), format: "number", desc: "Leads successfully contacted" },
-      { key: "interestedLeads", label: "Interested Leads", value: curLeadSum.interested, prev: prevLeadSum.interested, delta: pctDelta(curLeadSum.interested, prevLeadSum.interested), format: "number", desc: "Customers interested in scrapping" },
-      { key: "qualifiedLeads", label: "Qualified Leads", value: curLeadSum.qualified, prev: prevLeadSum.qualified, delta: pctDelta(curLeadSum.qualified, prevLeadSum.qualified), format: "number", desc: "Leads meeting business eligibility" },
-      { key: "confirmedDeals", label: "Confirmed Deals", value: curLeadSum.confirmed, prev: prevLeadSum.confirmed, delta: pctDelta(curLeadSum.confirmed, prevLeadSum.confirmed), format: "number", desc: "Customers agreeing to proceed" },
-      { key: "vehiclesCollected", label: "Vehicles Collected", value: currentPickups.length, prev: prevPickups.length, delta: pctDelta(currentPickups.length, prevPickups.length), format: "number", desc: "Vehicles picked up & received" },
-      { key: "completedTransactions", label: "Completed Transactions", value: curCompletedTxns, prev: prevCompletedTxns, delta: pctDelta(curCompletedTxns, prevCompletedTxns), format: "number", desc: "Successfully closed transactions" },
+      ...(canViewLeads
+        ? [
+            { key: "totalLeads", label: "Total Leads", value: curLeadSum.total, prev: prevLeadSum.total, delta: pctDelta(curLeadSum.total, prevLeadSum.total), format: "number", desc: "Total enquiries received in period" },
+            { key: "newLeads", label: "New Leads", value: curLeadSum.newCount, prev: prevLeadSum.newCount, delta: pctDelta(curLeadSum.newCount, prevLeadSum.newCount), format: "number", desc: "Leads awaiting first contact" },
+            { key: "contactedLeads", label: "Contacted Leads", value: curLeadSum.contacted, prev: prevLeadSum.contacted, delta: pctDelta(curLeadSum.contacted, prevLeadSum.contacted), format: "number", desc: "Leads successfully contacted" },
+            { key: "interestedLeads", label: "Interested Leads", value: curLeadSum.interested, prev: prevLeadSum.interested, delta: pctDelta(curLeadSum.interested, prevLeadSum.interested), format: "number", desc: "Customers interested in scrapping" },
+            { key: "qualifiedLeads", label: "Qualified Leads", value: curLeadSum.qualified, prev: prevLeadSum.qualified, delta: pctDelta(curLeadSum.qualified, prevLeadSum.qualified), format: "number", desc: "Leads meeting business eligibility" },
+            { key: "confirmedDeals", label: "Confirmed Deals", value: curLeadSum.confirmed, prev: prevLeadSum.confirmed, delta: pctDelta(curLeadSum.confirmed, prevLeadSum.confirmed), format: "number", desc: "Customers agreeing to proceed" },
+          ]
+        : []),
+      ...(canViewVehicles || canViewFinance
+        ? [
+            { key: "vehiclesCollected", label: "Vehicles Collected", value: currentPickups.length, prev: prevPickups.length, delta: pctDelta(currentPickups.length, prevPickups.length), format: "number", desc: "Vehicles picked up & received" },
+            { key: "completedTransactions", label: "Completed Transactions", value: curCompletedTxns, prev: prevCompletedTxns, delta: pctDelta(curCompletedTxns, prevCompletedTxns), format: "number", desc: "Successfully closed transactions" },
+          ]
+        : []),
       ...(canViewAds
         ? [
             { key: "totalAdSpend", label: "Total Ad Spend", value: curAdSum.spend, prev: prevAdSum.spend, delta: pctDelta(curAdSum.spend, prevAdSum.spend), format: "currency", desc: "Meta advertising expenditure" },
@@ -267,7 +279,9 @@ export async function GET(req: Request) {
             { key: "averageCpl", label: "Average CPL", value: Math.round(curAvgCpl), prev: Math.round(prevAvgCpl), delta: pctDelta(curAvgCpl, prevAvgCpl), format: "currency", desc: "Average advertising cost per lead" },
           ]
         : []),
-      { key: "conversionRate", label: "Conversion Rate", value: Number(curConvRate.toFixed(2)), prev: Number(prevConvRate.toFixed(2)), delta: pctDelta(curConvRate, prevConvRate), format: "percent", desc: "Completed leads vs total leads" },
+      ...(canViewLeads
+        ? [{ key: "conversionRate", label: "Conversion Rate", value: Number(curConvRate.toFixed(2)), prev: Number(prevConvRate.toFixed(2)), delta: pctDelta(curConvRate, prevConvRate), format: "percent", desc: "Completed leads vs total leads" }]
+        : []),
       ...(canViewFinance
         ? [
             { key: "totalPurchaseValue", label: "Total Purchase Value", value: curPurchaseVal, prev: prevPurchaseVal, delta: pctDelta(curPurchaseVal, prevPurchaseVal), format: "currency", desc: "Total vehicle purchase spend" },
@@ -429,36 +443,42 @@ export async function GET(req: Request) {
 
     return NextResponse.json({
       dateRange: { start: start.toISOString(), end: end.toISOString() },
-      permissions: { canViewFinance, canViewAds, viewAllLeads },
+      permissions: { canViewFinance, canViewAds, viewAllLeads, canViewLeads, canViewVehicles, canViewTeam },
       kpis,
       charts: {
-        leadGenTrend,
+        leadGenTrend: canViewLeads ? leadGenTrend : [],
         adSpendTrend: canViewAds ? adSpendTrend : [],
-        conversionFunnel,
-        leadSourceDistribution,
+        conversionFunnel: canViewLeads ? conversionFunnel : [],
+        leadSourceDistribution: canViewLeads ? leadSourceDistribution : [],
         businessPerformanceTrend: canViewFinance ? businessPerformanceTrend : [],
       },
-      recentActivity: recentActivities.map((a) => ({
-        id: a.id,
-        type: a.activityType,
-        summary: a.summary,
-        leadId: a.lead.id,
-        leadCode: a.lead.leadCode,
-        customerName: a.lead.customer.name,
-        actor: a.performedBy?.fullName ?? "System",
-        createdAt: a.createdAt,
-      })),
+      recentActivity: canViewLeads
+        ? recentActivities.map((a) => ({
+            id: a.id,
+            type: a.activityType,
+            summary: a.summary,
+            leadId: a.lead.id,
+            leadCode: a.lead.leadCode,
+            customerName: a.lead.customer.name,
+            actor: a.performedBy?.fullName ?? "System",
+            createdAt: a.createdAt,
+          }))
+        : [],
       widgets: {
-        todayFollowUps: todayFollowUps.slice(0, 6),
-        overdueFollowUps: overdueFollowUps.slice(0, 6),
-        newEnquiries: currentLeads.filter((l) => l.status === "New").slice(0, 6),
-        unassignedLeads: currentLeads.filter((l) => !l.assignedEmployeeId).slice(0, 6),
-        highPriorityLeads: currentLeads.filter((l) => l.priority === "Hot" && l.status !== "Lost" && l.status !== "Completed").slice(0, 6),
-        recentCustomerEnquiries: currentLeads.slice(0, 6),
+        todayFollowUps: canViewLeads ? todayFollowUps.slice(0, 6) : [],
+        overdueFollowUps: canViewLeads ? overdueFollowUps.slice(0, 6) : [],
+        newEnquiries: canViewLeads ? currentLeads.filter((l) => l.status === "New").slice(0, 6) : [],
+        unassignedLeads: viewAllLeads ? currentLeads.filter((l) => !l.assignedEmployeeId).slice(0, 6) : [],
+        highPriorityLeads: canViewLeads ? currentLeads.filter((l) => l.priority === "Hot" && l.status !== "Lost" && l.status !== "Completed").slice(0, 6) : [],
+        recentCustomerEnquiries: canViewLeads ? currentLeads.slice(0, 6) : [],
         topCampaigns: canViewAds ? topCampaigns : [],
-        topSalespeople,
+        topSalespeople: canViewTeam
+          ? topSalespeople
+          : session.roleCode === "SALES_EXECUTIVE"
+          ? topSalespeople.filter((s) => s.id === session.employeeId)
+          : [],
         latestTransactions: canViewFinance ? currentTxns.slice(0, 6) : [],
-        upcomingPickups,
+        upcomingPickups: canViewVehicles ? upcomingPickups : [],
       },
     });
   } catch (err) {

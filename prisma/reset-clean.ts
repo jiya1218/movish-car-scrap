@@ -135,31 +135,50 @@ async function main() {
     }
   }
 
-  // 3. Single Clean Owner / Super Admin Account
-  const ownerEmp = await prisma.employee.create({
-    data: {
-      employeeCode: "EMP-001",
-      fullName: "Movish Group Owner",
-      mobile: "9825000001",
-      email: "owner@movishgroup.in",
-      roleId: roles.SUPER_ADMIN,
-      joiningDate: new Date(),
-      assignedDistrict: "Ahmedabad",
-      assignedCity: "Ahmedabad",
-      accountStatus: "Active",
-    },
-  });
+  // 3. Clean Role Accounts (1 per role, 0 dummy business records)
+  const defaultPassHash = hashPassword("Movish@2026");
+  const roleUsersSeed = [
+    { code: "EMP-001", name: "Movish Owner", email: "owner@movishgroup.in", mobile: "9825000001", roleCode: "SUPER_ADMIN", city: "Ahmedabad" },
+    { code: "EMP-002", name: "Movish Admin", email: "admin@movishgroup.in", mobile: "9825000002", roleCode: "ADMIN", city: "Ahmedabad" },
+    { code: "EMP-003", name: "Movish Manager", email: "manager@movishgroup.in", mobile: "9825000003", roleCode: "MANAGER", city: "Ahmedabad" },
+    { code: "EMP-004", name: "Movish Sales Executive", email: "sales@movishgroup.in", mobile: "9825000004", roleCode: "SALES_EXECUTIVE", city: "Ahmedabad" },
+    { code: "EMP-005", name: "Movish Marketing Executive", email: "marketing@movishgroup.in", mobile: "9825000005", roleCode: "MARKETING_EXECUTIVE", city: "Ahmedabad" },
+    { code: "EMP-006", name: "Movish Operations Executive", email: "operations@movishgroup.in", mobile: "9825000006", roleCode: "OPERATIONS_EXECUTIVE", city: "Ahmedabad" },
+    { code: "EMP-007", name: "Movish Accounts Executive", email: "accounts@movishgroup.in", mobile: "9825000007", roleCode: "ACCOUNTS_EXECUTIVE", city: "Ahmedabad" },
+  ];
 
-  const ownerUser = await prisma.user.create({
-    data: {
-      email: "owner@movishgroup.in",
-      passwordHash: hashPassword("Movish@2026"),
-      name: "Movish Group Owner",
-      roleId: roles.SUPER_ADMIN,
-      employeeId: ownerEmp.id,
-      isActive: true,
-    },
-  });
+  let ownerUserId = "";
+  let ownerName = "";
+  for (const ru of roleUsersSeed) {
+    const emp = await prisma.employee.create({
+      data: {
+        employeeCode: ru.code,
+        fullName: ru.name,
+        mobile: ru.mobile,
+        email: ru.email,
+        roleId: roles[ru.roleCode],
+        joiningDate: new Date(),
+        assignedDistrict: "Ahmedabad",
+        assignedCity: ru.city,
+        accountStatus: "Active",
+      },
+    });
+    const usr = await prisma.user.create({
+      data: {
+        email: ru.email,
+        passwordHash: defaultPassHash,
+        name: ru.name,
+        roleId: roles[ru.roleCode],
+        employeeId: emp.id,
+        isActive: true,
+      },
+    });
+    if (ru.roleCode === "SUPER_ADMIN") {
+      ownerUserId = usr.id;
+      ownerName = usr.name;
+    }
+  }
+  const ownerUser = { id: ownerUserId, name: ownerName };
 
   // 4. Gujarat Reference Locations
   const gujaratLocations = [

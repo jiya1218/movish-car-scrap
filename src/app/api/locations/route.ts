@@ -7,6 +7,9 @@ export async function GET(req: Request) {
   try {
     const session = await getSessionContext();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session.allowedModules.includes("locations")) {
+      return NextResponse.json({ error: "Forbidden: Location analytics is restricted for your role" }, { status: 403 });
+    }
 
     const { searchParams } = new URL(req.url);
     const districtFilter = searchParams.get("district") || "All";

@@ -29,7 +29,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "./AuthContext";
 import { useTheme } from "./ThemeProvider";
-import { NAV_MODULES, ROLE_DEFINITIONS } from "@/lib/constants";
+import { NAV_MODULES } from "@/lib/constants";
 import { cn } from "@/lib/format";
 
 const MODULE_ICONS: Record<string, React.ReactNode> = {
@@ -61,7 +61,7 @@ interface SearchResult {
  * global search, role switcher, theme toggle, and notifications indicator.
  */
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { user, loading, canSwitchRoles, switchRole, logout } = useAuth();
+  const { user, loading, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const pathname = usePathname();
   const router = useRouter();
@@ -115,6 +115,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   if (!user) return null;
 
   const visibleModules = NAV_MODULES.filter((m) => user.allowedModules.includes(m.key));
+  const activeModule = NAV_MODULES.find((m) =>
+    m.href === "/" ? pathname === "/" : pathname === m.href || pathname.startsWith(`${m.href}/`)
+  );
+  const isRouteRestricted = Boolean(activeModule && !user.allowedModules.includes(activeModule.key));
 
   const renderNavLinks = (isMobile = false) => (
     <nav className="flex-1 px-2.5 py-3 space-y-0.5 overflow-y-auto">
@@ -288,24 +292,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* Role Switcher */}
-            {canSwitchRoles && (
-              <div className="hidden md:flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1">
-                <Shield className="w-3.5 h-3.5 text-[#0B5CA8] dark:text-blue-400" />
-                <select
-                  value={user.roleCode}
-                  onChange={(e) => switchRole(e.target.value)}
-                  className="bg-transparent text-xs font-medium text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer"
-                  aria-label="Switch user role"
-                >
-                  {ROLE_DEFINITIONS.map((r) => (
-                    <option key={r.code} value={r.code} className="bg-white dark:bg-slate-900">
-                      {r.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
+            {/* Active Role Badge */}
+            <div className="hidden md:flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1 text-xs font-medium text-slate-700 dark:text-slate-200">
+              <Shield className="w-3.5 h-3.5 text-[#0B5CA8] dark:text-blue-400" />
+              <span>{user.roleName}</span>
+            </div>
 
             {/* Theme Toggle */}
             <button
@@ -342,7 +333,27 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <main className="flex-1 p-4 sm:p-6 max-w-[1600px] w-full mx-auto">{children}</main>
+        <main className="flex-1 p-4 sm:p-6 max-w-[1600px] w-full mx-auto">
+          {isRouteRestricted ? (
+            <div className="bg-white dark:bg-[#111a2e] border border-red-200 dark:border-red-900 rounded-xl p-8 text-center max-w-lg mx-auto mt-12">
+              <Shield className="w-10 h-10 text-[#D62828] mx-auto mb-3" />
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                Access Restricted for Your Role
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
+                Your active role (<strong>{user.roleName}</strong>) does not have permission to access <strong>{activeModule?.label}</strong>.
+              </p>
+              <Link
+                href="/"
+                className="inline-block mt-4 px-4 py-2 text-xs font-semibold rounded-lg bg-[#0B5CA8] text-white hover:bg-[#1B3156]"
+              >
+                Return to Dashboard
+              </Link>
+            </div>
+          ) : (
+            children
+          )}
+        </main>
       </div>
     </div>
   );

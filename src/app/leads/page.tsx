@@ -439,7 +439,7 @@ function LeadsContent() {
                     key={stage.key}
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={() => {
-                      if (!draggingLeadId) return;
+                      if (!draggingLeadId || !hasPerm("leads:edit")) return;
                       const dragged = pipelineLeads.find((l: any) => l.id === draggingLeadId);
                       setDraggingLeadId(null);
                       if (dragged && dragged.status !== stage.key) {
@@ -467,9 +467,9 @@ function LeadsContent() {
                         cards.map((l: any) => (
                           <div
                             key={l.id}
-                            draggable
-                            onDragStart={() => setDraggingLeadId(l.id)}
-                            className="p-3 bg-white dark:bg-[#111a2e] rounded-lg border border-slate-200 dark:border-slate-800 shadow-xs cursor-grab active:cursor-grabbing hover:border-[#0B5CA8] transition-colors"
+                            draggable={hasPerm("leads:edit")}
+                            onDragStart={() => hasPerm("leads:edit") && setDraggingLeadId(l.id)}
+                            className={`p-3 bg-white dark:bg-[#111a2e] rounded-lg border border-slate-200 dark:border-slate-800 shadow-xs ${hasPerm("leads:edit") ? "cursor-grab active:cursor-grabbing hover:border-[#0B5CA8]" : ""} transition-colors`}
                           >
                             <div className="flex items-center justify-between gap-1 text-[11px] mb-1">
                               <Link href={`/leads/${l.id}`} className="font-bold text-[#0B5CA8] hover:underline">
@@ -493,8 +493,9 @@ function LeadsContent() {
                               </span>
                               <select
                                 value={l.status}
+                                disabled={!hasPerm("leads:edit")}
                                 onChange={(e) => updateLeadStatus(l, e.target.value)}
-                                className="text-[10px] rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-1.5 py-0.5"
+                                className="text-[10px] rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-1.5 py-0.5 disabled:opacity-60"
                                 aria-label="Move stage"
                               >
                                 {LEAD_STAGES.map((s) => (

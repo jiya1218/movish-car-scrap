@@ -17,20 +17,16 @@ export interface AuthUser {
 
 interface AuthContextValue {
   user: AuthUser | null;
-  canSwitchRoles: boolean;
   loading: boolean;
   refreshUser: () => Promise<void>;
-  switchRole: (roleCode: string) => Promise<void>;
   logout: () => Promise<void>;
   hasPerm: (code: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextValue>({
   user: null,
-  canSwitchRoles: false,
   loading: true,
   refreshUser: async () => {},
-  switchRole: async () => {},
   logout: async () => {},
   hasPerm: () => false,
 });
@@ -40,7 +36,6 @@ const AuthContext = createContext<AuthContextValue>({
  */
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [canSwitchRoles, setCanSwitchRoles] = useState(false);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
@@ -51,10 +46,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (res.ok) {
         const data = await res.json();
         setUser(data.user);
-        setCanSwitchRoles(Boolean(data.canSwitchRoles));
       } else {
         setUser(null);
-        setCanSwitchRoles(false);
         if (pathname !== "/login") {
           router.replace("/login");
         }
@@ -70,23 +63,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     refreshUser();
   }, [refreshUser]);
 
-  const switchRole = async (roleCode: string) => {
-    const res = await fetch("/api/auth/switch", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ roleCode }),
-    });
-    if (res.ok) {
-      await refreshUser();
-      router.push("/");
-      router.refresh();
-    }
-  };
-
   const logout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     setUser(null);
-    setCanSwitchRoles(false);
     router.replace("/login");
   };
 
@@ -100,7 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <AuthContext.Provider value={{ user, canSwitchRoles, loading, refreshUser, switchRole, logout, hasPerm }}>
+    <AuthContext.Provider value={{ user, loading, refreshUser, logout, hasPerm }}>
       {children}
     </AuthContext.Provider>
   );

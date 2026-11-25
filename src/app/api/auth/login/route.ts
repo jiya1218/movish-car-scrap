@@ -3,7 +3,6 @@ import { prisma } from "@/lib/prisma";
 import {
   createSessionToken,
   setSessionCookie,
-  setSwitchGrantCookie,
   verifyPassword,
 } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
@@ -53,9 +52,6 @@ export async function POST(req: Request) {
     });
 
     await setSessionCookie(token);
-    if (["SUPER_ADMIN", "ADMIN"].includes(user.role.code)) {
-      await setSwitchGrantCookie(user.id);
-    }
 
     await logAudit({
       actorUserId: user.id,

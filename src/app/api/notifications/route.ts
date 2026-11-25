@@ -10,17 +10,20 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const filter = searchParams.get("filter") || "all";
 
+    const roleScope =
+      ["SUPER_ADMIN", "ADMIN"].includes(session.roleCode)
+        ? {}
+        : { OR: [{ targetRoleCode: null }, { targetRoleCode: session.roleCode }] };
+
+    const statusScope =
+      filter === "unread" ? { isRead: false } : filter === "read" ? { isRead: true } : {};
+
     const notifications = await prisma.notification.findMany({
-      where:
-        filter === "unread"
-          ? { isRead: false }
-          : filter === "read"
-          ? { isRead: true }
-          : {},
+      where: { ...roleScope, ...statusScope },
       orderBy: { createdAt: "desc" },
     });
 
-    const unreadCount = await prisma.notification.count({ where: { isRead: false } });
+    const unreadCount = await prisma.notification.count({ where: { ...roleScope, isRead: false } });
 
     return NextResponse.json({ notifications, unreadCount });
   } catch (err) {

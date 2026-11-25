@@ -1,20 +1,28 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSessionContext } from "@/lib/auth";
+import { canPerform, getSessionContext } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
 
 export async function GET(req: Request) {
   try {
     const session = await getSessionContext();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session.allowedModules.includes("communication")) {
+      return NextResponse.json({ error: "Forbidden: Communication module is restricted for your role" }, { status: 403 });
+    }
 
     const { searchParams } = new URL(req.url);
     const type = searchParams.get("type") || "All";
     const search = (searchParams.get("search") || "").trim().toLowerCase();
+    const viewAll = canPerform(session, "leads:view_all");
+    const empScope = !viewAll && session.employeeId ? { employeeId: session.employeeId } : {};
 
     const [logs, whatsappSetting, customers, leads] = await Promise.all([
       prisma.communicationLog.findMany({
-        where: type !== "All" ? { communicationType: type } : {},
+        where: {
+          ...empScope,
+          ...(type !== "All" ? { communicationType: type } : {}),
+        },
         include: {
           customer: { select: { id: true, customerCode: true, name: true, primaryMobile: true, city: true } },
           lead: { select: { id: true, leadCode: true, status: true } },
@@ -53,6 +61,9 @@ export async function POST(req: Request) {
   try {
     const session = await getSessionContext();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session.allowedModules.includes("communication")) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     const body = await req.json();
     const customerId = String(body.customerId ?? "");

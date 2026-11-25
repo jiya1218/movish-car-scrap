@@ -7,13 +7,23 @@ export async function GET(req: Request) {
   try {
     const session = await getSessionContext();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session.allowedModules.includes("customers")) {
+      return NextResponse.json({ error: "Forbidden: Customer management is restricted for your role" }, { status: 403 });
+    }
 
     const { searchParams } = new URL(req.url);
     const search = (searchParams.get("search") || "").trim().toLowerCase();
     const district = searchParams.get("district") || "All";
     const repeatOnly = searchParams.get("repeatOnly") === "true";
 
+    const viewAllLeads = canPerform(session, "leads:view_all") || ["OPERATIONS_EXECUTIVE", "ACCOUNTS_EXECUTIVE"].includes(session.roleCode);
+    const customerWhere =
+      !viewAllLeads && session.employeeId
+        ? { OR: [{ leads: { some: { assignedEmployeeId: session.employeeId, isDeleted: false } } }, { leads: { none: {} } }] }
+        : {};
+
     const customers = await prisma.customer.findMany({
+      where: customerWhere,
       include: {
         leads: { where: { isDeleted: false }, select: { id: true, leadCode: true, status: true, enquiryDate: true } },
         vehicles: { select: { id: true, vehicleCode: true, manufacturer: true, model: true, registrationNumber: true, purchaseStatus: true } },

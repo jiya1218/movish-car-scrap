@@ -4,7 +4,6 @@ import { prisma } from "./prisma";
 import { ROLE_NAV_ACCESS, type RoleCode } from "./constants";
 
 const SESSION_COOKIE_NAME = "movish_bms_session";
-const SWITCH_GRANT_COOKIE_NAME = "movish_switch_grant";
 const SESSION_MAX_AGE_SEC = 60 * 60 * 24 * 7; // 7 days
 
 function getAuthSecret(): string {
@@ -39,7 +38,6 @@ export interface SessionPayload {
   roleCode: RoleCode;
   roleName: string;
   employeeId: string | null;
-  previewRoleCode?: RoleCode;
   exp: number;
 }
 
@@ -123,32 +121,8 @@ export async function getSessionContext(): Promise<AuthenticatedContext | null> 
 
   if (!user || !user.isActive) return null;
 
-  let roleCode = user.role.code as RoleCode;
-  let roleName = user.role.name;
-  let permissions = user.role.permissions.map((rp) => rp.permission.code);
-
-  // Allow Super Admin / Admin to preview any role view cleanly even before creating separate staff accounts
-  if (
-    parsed.previewRoleCode &&
-    parsed.previewRoleCode !== roleCode &&
-    ["SUPER_ADMIN", "ADMIN"].includes(user.role.code)
-  ) {
-    const previewRole = await prisma.role.findUnique({
-      where: { code: parsed.previewRoleCode },
-      include: {
-        permissions: {
-          where: { allowed: true },
-          include: { permission: true },
-        },
-      },
-    });
-    if (previewRole) {
-      roleCode = previewRole.code as RoleCode;
-      roleName = `${previewRole.name} (Preview)`;
-      permissions = previewRole.permissions.map((rp) => rp.permission.code);
-    }
-  }
-
+  const roleCode = user.role.code as RoleCode;
+  const permissions = user.role.permissions.map((rp) => rp.permission.code);
   const allowedModules = ROLE_NAV_ACCESS[roleCode] ?? ["dashboard"];
 
   return {
@@ -156,7 +130,7 @@ export async function getSessionContext(): Promise<AuthenticatedContext | null> 
     email: user.email,
     name: user.name,
     roleCode,
-    roleName,
+    roleName: user.role.name,
     employeeId: user.employeeId,
     permissions,
     allowedModules,
@@ -191,47 +165,4 @@ export async function setSessionCookie(token: string) {
 export async function clearSessionCookie() {
   const cookieStore = await cookies();
   cookieStore.delete(SESSION_COOKIE_NAME);
-  cookieStore.delete(SWITCH_GRANT_COOKIE_NAME);
-}
-
-/**
- * Grants Super Admin / Admin users the ability to switch back after testing another role view.
- */
-export async function setSwitchGrantCookie(userId: string) {
-  const token = crypto
-    .createHmac("sha256", getAuthSecret())
-    .update(`switch:${userId}`)
-    .digest("base64url");
-  const cookieStore = await cookies();
-  cookieStore.set(SWITCH_GRANT_COOKIE_NAME, `${userId}.${token}`, {
-    httpOnly: true,
-    sameSite: "lax",
-    path: "/",
-    maxAge: SESSION_MAX_AGE_SEC,
-  });
-}
-
-/**
- * Verifies whether the current browser holds a valid Super Admin switch grant.
- */
-export async function hasSwitchGrant(): Promise<boolean> {
-  const cookieStore = await cookies();
-  const raw = cookieStore.get(SWITCH_GRANT_COOKIE_NAME)?.value;
-  if (!raw || !raw.includes(".")) return false;
-  const [userId, sig] = raw.split(".");
-  if (!userId || !sig) return false;
-  const expected = crypto
-    .createHmac("sha256", getAuthSecret())
-    .update(`switch:${userId}`)
-    .digest("base64url");
-  const sigBuf = Buffer.from(sig);
-  const expBuf = Buffer.from(expected);
-  if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
-    return false;
-  }
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    include: { role: true },
-  });
-  return Boolean(user && user.isActive && ["SUPER_ADMIN", "ADMIN"].includes(user.role.code));
 }

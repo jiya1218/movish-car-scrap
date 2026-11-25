@@ -9,6 +9,9 @@ export async function GET() {
   try {
     const session = await getSessionContext();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!canPerform(session, "team:view")) {
+      return NextResponse.json({ error: "Forbidden: Team management is restricted for your role" }, { status: 403 });
+    }
 
     const [employees, activities, roles] = await Promise.all([
       prisma.employee.findMany({
